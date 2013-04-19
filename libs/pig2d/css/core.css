@@ -10,6 +10,10 @@ root {
     display: block;
 }
 
+* {
+    margin: 0px;
+}
+
 .pig2d-fullscreen {
     position: absolute;
     width: 100%;

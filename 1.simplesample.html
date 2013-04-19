@@ -20,6 +20,7 @@
 
     <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
     <script src="libs/pig2d/js/core.js"></script>
+    <script src="libs/gl-matrix.js"></script>
     <script src="libs/pig2d/js/node2d.js"></script>
 
     <script>
@@ -27,17 +28,108 @@
 
         $(function() {
 
+            var rootNode = new Pig2d.node(
+                    {
+                        el : $('<div></div>'),
+                        model : new Pig2d.model(),
+                        name : 'sceneroot'
+                    }
+            );
+            rootNode.get('model').setPosition(0,0);
+            $('.pig2d-fullscreen').append(rootNode.get('el'));
+            rootNode.show(true);
+
             //노드생성
             var node = new Pig2d.node(
                     {
-                        el : $('<div></div>').appendTo($('.pig2d-fullscreen')),
-                        data :{
-                            frames : [ [{ x:179,y:51,width:25,height:26,centerOffset: {x:-12,y:-21}}] ],
-                            texture : './res/galaga.png'
-                        }
+                        el : $('.pig2d-templet .pig2d-sprite-templ ').clone(),
+                        model : new Pig2d.SpriteModel( {
+
+                                    data :{
+                                        frames : [
+                                            {
+                                                sheet:[{ x:179,y:51,width:25,height:26,centerOffset: {x:-12,y:-21}}]
+                                            }
+                                        ],
+                                        texture : './res/galaga.png'
+                                    }
+
+                                }
+                        )
                     }
             );
-            node.setPosition(100,50).render().show(true);
+
+            node.get('model').setPosition(100,150);
+            node.show(true);
+            rootNode.add(node);
+
+
+            rootNode.update(true);
+
+            function callbackControl(movementX,movementY) {
+
+                node.get('model').rotate(movementX);
+                rootNode.update(true);
+
+
+            }
+
+
+            //이벤트처리
+            document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+
+            function onDocumentMouseDown( event ) {
+
+                event.preventDefault();
+
+                document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+                document.addEventListener( 'mouseup', onDocumentMouseUp, false );
+
+            }
+
+            function onDocumentMouseMove( event ) {
+
+                var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+                var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+
+                callbackControl(movementX,movementY);
+
+            }
+
+            function onDocumentMouseUp( event ) {
+
+                document.removeEventListener( 'mousemove', onDocumentMouseMove );
+                document.removeEventListener( 'mouseup', onDocumentMouseUp );
+
+            }
+
+            //터치 디바이스
+            var touchX,  touchY;
+
+            function onDocumentTouchStart( event ) {
+
+                event.preventDefault();
+
+                var touch = event.touches[ 0 ];
+
+                touchX = touch.screenX;
+                touchY = touch.screenY;
+
+            }
+
+            function onDocumentTouchMove( event ) {
+
+                event.preventDefault();
+
+                var touch = event.touches[ 0 ];
+
+                var movementX =  (touchX - touch.screenX);
+                var movementY =  (touchY - touch.screenY);
+                touchX = touch.screenX;
+                touchY = touch.screenY;
+
+                callbackControl(movementX,movementY);
+            }
 
         });
 
@@ -50,6 +142,18 @@
 <body>
 
 <div class="pig2d-fullscreen" >
+</div>
+
+
+<div class='pig2d-templet' style="visibility: hidden">
+
+    <div class='pig2d-sprite-templ'
+         style="
+         width: 100px;
+         height: 100px;"
+            >
+    </div>
+
 </div>
 
 </body>
