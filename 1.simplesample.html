@@ -50,8 +50,7 @@
                                             {
                                                 sheet:[{ x:179,y:51,width:25,height:26,centerOffset: {x:-12,y:-21}}]
                                             }
-                                        ],
-                                        texture : './res/galaga.png'
+                                        ]
                                     }
 
                                 }
@@ -60,23 +59,28 @@
             );
 
             node.get('model').setPosition(100,150);
+            node.setMatrial({
+                texture : './res/galaga.png'
+            });
             node.show(true);
             rootNode.add(node);
-
 
             rootNode.update(true);
 
             function callbackControl(movementX,movementY) {
-
                 node.get('model').rotate(movementX);
+
+                node.get('model').translate(movementY,new gbox3d.core.Vect2d(0,1));
+
                 rootNode.update(true);
-
-
             }
 
 
             //이벤트처리
             document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+            document.addEventListener( 'touchstart', onDocumentTouchStart, false );
+            document.addEventListener( 'touchmove', onDocumentTouchMove, false );
+
 
             function onDocumentMouseDown( event ) {
 
@@ -92,7 +96,7 @@
                 var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
                 var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
 
-                callbackControl(movementX,movementY);
+                callbackControl(movementX,-movementY);
 
             }
 

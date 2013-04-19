@@ -51,36 +51,72 @@ Pig2d.model = Backbone.Model.extend({
         return this;
 
     },
+    translate: function () {
+
+        var v1 = new gbox3d.core.Vect2d();
+        var center = new gbox3d.core.Vect2d(0,0);
+
+        return function ( distance, axis ) {
+
+            // axis is assumed to be normalized
+
+            v1.copy( axis );
+            v1.multiply( distance );
+
+            v1.rotate( gbox3d.core.degToRad(-this.attributes.rotation),center);
+
+            this.attributes.translation.addToThis( v1 );
+
+            return this;
+
+        };
+
+    }(),
     updateCSS : function(element) {
 
         var trans = this.attributes.translation;
         var rot = this.attributes.rotation;
         var scale = this.attributes.scale;
 
-        //mat2d.setRotation(this.attributes.matrix);
+        mat2d.setRotation(this.attributes.matrix,gbox3d.core.degToRad(rot));
         mat2d.setTranslation(this.attributes.matrix,trans.X,trans.Y);
+        mat2d.setScale(this.attributes.matrix,scale.X,scale.Y);
+
+        var mat = this.attributes.matrix;
+
+        var css_val =  'matrix('
+            + mat[0] + ','
+            + mat[1] + ','
+            + mat[2] + ','
+            + mat[3] + ','
+            + mat[4] + ','
+            + mat[5] + ')';
 
 
-        var css_val =    'translate(' +  trans.X+'px,' + trans.Y+'px)' +
-            ' rotate('+ rot +'deg)' +
-            ' scale(' + scale.X +','+ scale.Y +')';
+//        var css_val =    'translate(' +  trans.X+'px,' + trans.Y+'px)' +
+//            ' rotate('+ rot +'deg)' +
+//            ' scale(' + scale.X +','+ scale.Y +')';
 
         $(element).css('-webkit-transform',css_val);
     }
 });
 
+//Pig2d.ImgModel = Pig2d.model.extend({
+//    initialize: function(param) {
+//        Pig2d.model.prototype.initialize.call(this);
+//    }
+//});
+
 Pig2d.SpriteModel = Pig2d.model.extend({
-    initialize: function() {
+    initialize: function(param) {
         Pig2d.model.prototype.initialize.call(this);
         this.attributes.currentFrame = 0;
-
-
     },
     updateCSS : function (element) {
 
         Pig2d.model.prototype.updateCSS.call(this,element);
 
-        var texture =  this.attributes.data.texture;
+
         var frame = this.attributes.data.frames[this.attributes.currentFrame];
 
         var sheet = frame.sheet[0];
@@ -90,9 +126,6 @@ Pig2d.SpriteModel = Pig2d.model.extend({
         $(element).css('background-position',  css_val );
         $(element).css('width',  sheet.width + 'px' );
         $(element).css('height',  sheet.height + 'px' );
-        $(element).css('background-image','url('+ texture +')');
-
-
     }
 });
 
@@ -100,7 +133,7 @@ Pig2d.SpriteModel = Pig2d.model.extend({
 /////////////////////////
 
 Pig2d.node = Backbone.Model.extend({
-    initialize: function() {
+    initialize: function(param) {
 
         this.attributes.chiledren = new Array();
         this.show(false);
@@ -108,6 +141,20 @@ Pig2d.node = Backbone.Model.extend({
         if(this.attributes.name != undefined) {
             $(this.attributes.el).attr('id',this.attributes.name);
         }
+    },
+    setMatrial : function(param) {
+
+        var el = this.attributes.el;
+
+        if(param.texture_size != undefined) {
+            $(el).css('width',  param.texture_size.width + 'px' );
+            $(el).css('height',  param.texture_size.height + 'px' );
+        }
+        if(param.texture != undefined) {
+            $(el).css('background-image','url('+ param.texture +')');
+        }
+
+        return this;
 
     },
     update: function(applyChild) {
@@ -180,8 +227,8 @@ Pig2d.node = Backbone.Model.extend({
 
 mat2d.setRotation = function(a,rad) {
 
-    var st = Math.sin(rad),
-    ct = Math.cos(rad);
+    var st = gbox3d.core.epsilon(Math.sin(rad)),
+    ct = gbox3d.core.epsilon(Math.cos(rad));
 
     a[0] = ct;
     a[1] = st;
@@ -194,5 +241,14 @@ mat2d.setTranslation = function(a,tx,ty) {
 
     a[4] = tx;
     a[5] = ty;
+}
+
+mat2d.setScale = function(a,sx,sy) {
+
+    a[0] *= sx;
+    a[1] *= sx;
+
+    a[2] *= sy;
+    a[3] *= sy;
 }
 

@@ -209,6 +209,12 @@ gbox3d.core.round = function(num, valid) {
 	return Math.round(num * v) / v;
 }
 
+gbox3d.core.epsilon = function ( value ) {
+
+    return Math.abs( value ) < 0.000001 ? 0 : value;
+
+};
+
 gbox3d.core.getAlpha = function(a) {
 	return ((a & 4278190080) >>> 24)
 };
