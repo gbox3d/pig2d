@@ -33,7 +33,6 @@ Pig2d.model = Backbone.Model.extend({
     setPosition : function(x,y) {
 
         this.attributes.translation.set(x,y);
-
         return this;
     },
 
