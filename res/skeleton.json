@@ -1,0 +1,65 @@
+{
+"bones": [
+	{ "name": "root", "x": 0.9 },
+	{ "name": "bone1", "parent": "root", "length": 47, "y": 3.59, "rotation": -91.6 },
+	{ "name": "bone2", "parent": "bone1", "length": 66.6, "x": 114.62, "y": 1.35, "rotation": -0.35 },
+	{ "name": "bone3", "parent": "bone2", "length": 55.82, "x": 83.38, "y": 1.07, "rotation": 2.26 }
+],
+"slots": [
+	{ "name": "thigh", "bone": "bone1", "attachment": "atat/atat-thigh" },
+	{ "name": "atat/atat-foot", "bone": "bone3", "attachment": "atat/atat-foot" },
+	{ "name": "atat/atat-shin", "bone": "bone2", "attachment": "atat/atat-shin" },
+	{ "name": "atat/atat-knee", "bone": "bone1", "attachment": "atat/atat-knee" }
+],
+"skins": {
+	"default": {
+		"thigh": {
+			"atat/atat-thigh": { "x": 37.34, "y": 4.01, "rotation": 92.23, "width": 131, "height": 120 }
+		},
+		"atat/atat-foot": {
+			"atat/atat-foot": { "x": 29.8, "y": 1.76, "rotation": 89.19, "width": 131, "height": 88 }
+		},
+		"atat/atat-shin": {
+			"atat/atat-shin": { "x": 33.26, "y": 3.71, "rotation": 91.9, "width": 131, "height": 91 }
+		},
+		"atat/atat-knee": {
+			"atat/atat-knee": { "x": 92.68, "y": 4.78, "rotation": 93.72, "width": 131, "height": 41 }
+		}
+	}
+},
+"animations": {
+	"animation": {
+		"bones": {
+			"bone1": {
+				"rotate": [
+					{ "time": 0, "angle": 0 },
+					{ "time": 0.3333, "angle": 60.31 },
+					{ "time": 1.6666, "angle": -2.96 }
+				],
+				"translate": [
+					{ "time": 0, "x": 0, "y": 0, "curve": "stepped" },
+					{ "time": 0.3333, "x": 0, "y": 0 }
+				],
+				"scale": [
+					{ "time": 0, "x": 1, "y": 1, "curve": "stepped" },
+					{ "time": 0.3333, "x": 1, "y": 1 }
+				]
+			},
+			"bone3": {
+				"rotate": [
+					{ "time": 0, "angle": 0 },
+					{ "time": 0.3333, "angle": -69.27 },
+					{ "time": 1.6666, "angle": -4.12 }
+				]
+			},
+			"bone2": {
+				"rotate": [
+					{ "time": 0, "angle": 0 },
+					{ "time": 0.3333, "angle": -45.26 },
+					{ "time": 1.6666, "angle": 4.92 }
+				]
+			}
+		}
+	}
+}
+}
