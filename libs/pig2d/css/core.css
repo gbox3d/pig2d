@@ -12,6 +12,8 @@ root {
 
 * {
     margin: 0px;
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+    -webkit-user-select: none;
 }
 
 .pig2d-fullscreen {

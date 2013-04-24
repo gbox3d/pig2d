@@ -136,11 +136,18 @@ Pig2d.node = Backbone.Model.extend({
     initialize: function(param) {
 
         this.attributes.chiledren = new Array();
+        this.attributes.FSM = 'ready';
         this.show(false);
 
         if(this.attributes.name != undefined) {
             $(this.attributes.el).attr('id',this.attributes.name);
         }
+
+        var element =  this.get('el');
+//        if(this.attributes.animation != undefined ) {
+//            $(element).css('-webkit-transition','-webkit-transform 3s');
+//        }
+
     },
     setMatrial : function(param) {
 
@@ -159,7 +166,30 @@ Pig2d.node = Backbone.Model.extend({
     },
     update: function(applyChild) {
 
-        this.attributes.model.updateCSS(this.get('el'));
+        var element =  this.get('el');
+
+        switch(this.attributes.FSM)
+        {
+            case 'ready':
+                this.attributes.model.updateCSS(element);
+                break;
+//            case 'animation-start':
+//                var animation = this.attributes.animation;
+//
+//                var mat = this.get('model').get('matrix');
+//
+//                var _mat = mat2d.create();
+//                mat2d.rotate(_mat,mat,gbox3d.core.degToRad(animation.rotate[1].angle));
+//
+//                console.log(mat2d.CSSstr(_mat));
+//                $(element).css('-webkit-transform',mat2d.CSSstr(_mat));
+//
+//                this.attributes.FSM = 'animation-play';
+//                break;
+            case 'animation-play':
+                break;
+        }
+
 
         if( applyChild == true) {
             for(var index in this.attributes.chiledren) {
@@ -216,6 +246,8 @@ Pig2d.node = Backbone.Model.extend({
         $(parents.attributes.el).append($(child_node.get('el')));
         child_node.attributes.parent = parents;
 
+        return this;
+
     },
     setDrawOrder : function(order) {
         $(this.attributes.el).css('z-index',order);
@@ -251,4 +283,14 @@ mat2d.setScale = function(a,sx,sy) {
     a[2] *= sy;
     a[3] *= sy;
 }
+
+mat2d.CSSstr = function (a) {
+    return 'matrix('
+        + gbox3d.core.epsilon(a[0]) + ', '
+        + gbox3d.core.epsilon(a[1]) + ', '
+        + gbox3d.core.epsilon(a[2]) + ', '
+        + gbox3d.core.epsilon(a[3]) + ', '
+        + gbox3d.core.epsilon(a[4]) + ', '
+        + gbox3d.core.epsilon(a[5]) + ')';
+};
 

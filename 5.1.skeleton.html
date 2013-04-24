@@ -19,8 +19,8 @@
 
 
     <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <script src='libs/gl-matrix.js'></script>
     <script src="libs/pig2d/js/core.js"></script>
-    <script src="libs/gl-matrix.js"></script>
     <script src="libs/pig2d/js/node2d.js"></script>
 
     <script>
@@ -28,56 +28,152 @@
 
         $(function() {
 
-            var rootNode = new Pig2d.node(
-                    {
-                        el : $('<div></div>'),
-                        model : new Pig2d.model(),
-                        name : 'sceneroot'
-                    }
-            );
-            rootNode.get('model').setPosition(0,0);
-            $('.pig2d-fullscreen').append(rootNode.get('el'));
-            rootNode.show(true);
+            //var nodes = [];
+            var rootNode;
 
-            //노드생성
-            var node = new Pig2d.node(
-                    {
-                        el : $('.pig2d-templet .pig2d-sprite-templ ').clone(),
-                        model : new Pig2d.model()
-                    }
-            );
+            $.ajax({
+                type: 'GET',
+                dataType: 'json',
+                url: 'res/skeleton.json',
+                success: function(data, textStatus, jqXHR) {
 
-            node.get('model').setPosition(100,150);
-            node.setMatrial({
-                texture : './res/atat/atat-body.png',
-                texture_size : {
-                    width :298,
-                    height : 191
+                    //console.log(data);
+
+                    rootNode = new Pig2d.node(
+                            {
+                                el : $('<div></div>'),
+                                model : new Pig2d.model(),
+                                name : 'sceneroot'
+                            }
+                    );
+                    rootNode.get('model').setPosition(300,50);
+                    $('.pig2d-fullscreen').append(rootNode.get('el'));
+                    rootNode.show(true);
+
+
+                    var x, y,rot;
+                    var bone,animation;
+
+                    for(var index in data.bones)
+                    {
+                        bone = data.bones[index];
+                        animation = data.animations.animation.bones[bone.name];
+                        //console.log(animation);
+
+
+                        if(bone.x !=undefined) {
+                            x = bone.x;
+                        }
+                        else
+                        {
+                            x = 0;
+                        }
+
+                        if(bone.y !=undefined) {
+                            y = bone.y;
+                        }
+                        else
+                        {
+                            y = 0;
+                        }
+
+                        if(bone.rotation != undefined) {
+                            rot = bone.rotation;
+                        }
+                        else {
+                            rot = 0;
+                        }
+
+
+
+                        console.log(x + ',' + y);
+
+
+                        if(bone.parent == undefined) {
+
+                            //스켈레톤  만들기
+                            var node = new Pig2d.node(
+                                    {
+                                        el : $('.pig2d-templet .pig2d-templ-cross').clone().append(
+                                                $('<p></p>').text(bone.name).css('position','absolute')
+                                        ),
+                                        model : new Pig2d.model(),
+                                        name : bone.name
+                                    }
+                            );
+                            node.show(true).get('model').setPosition(x,y).setRotation(rot);
+                            rootNode.add(node);
+
+                        }
+                        else {
+                            //본 만들기
+                            var node = new Pig2d.node(
+                                    {
+                                        el : $('.pig2d-templet .pig2d-templ-cross').clone().append(
+                                                $('<p></p>').text(bone.name).css('position','absolute')
+                                        ),
+                                        model : new Pig2d.model(),
+                                        name : bone.name,
+                                        animation : animation
+                                    }
+                            );
+                            rootNode.add(node,rootNode.findByName(bone.parent));
+                            node.get('model').setPosition(x,y).setRotation(rot);
+                            node.show(true);
+
+                            var bone_node = new Pig2d.node(
+                                    {
+                                        el : $('.pig2d-templet .pig2d-templ-bone').clone(),
+                                        model : new Pig2d.model(),
+                                        name : bone.name
+                                    }
+                            );
+                            node.add(bone_node.show(true));
+
+
+
+                        }
+
+                    }
+
+
+                    //that.initElement($(data)[0]);
+
+                },
+                complete: function(jqXHR, textStatus) {
+
+
+
+                    console.log(rootNode);
+                    rootNode.get('model').setRotation(180);
+                    rootNode.update(true);
+
+
+
+//                    //게임루프
+//                    (function gameloop() {
+//                        //재호출을 위한 부분...
+//                        requestAnimationFrame(gameloop);
+//
+//                    })();
+
+
+
+                },
+                error: function(qXHR, textStatus, errorThrown) {
+                    console.log('error');
+
                 }
             });
-            node.show(true);
-            rootNode.add(node);
-
-
-            //cross node
-            var cross_node = new Pig2d.node(
-                    {
-                        el : $('.pig2d-templet .pig2d-templ-cross').clone(),
-                        model : new Pig2d.model(),
-                        name : 'cross'
-                    }
-            );
-            cross_node.show(true).get('model').setPosition(100,150);
-            rootNode.add(cross_node);
-
-
-
-            rootNode.update(true);
 
             function callbackControl(movementX,movementY) {
+
+                var node = rootNode.findByName('bone1');
+
                 node.get('model').rotate(movementX);
 
-                node.get('model').translate(movementY,new gbox3d.core.Vect2d(0,1));
+                node = rootNode.findByName('bone2');
+                node.get('model').rotate(movementY);
 
                 rootNode.update(true);
             }
@@ -142,6 +238,9 @@
                 callbackControl(movementX,movementY);
             }
 
+
+
+
         });
 
 
@@ -154,7 +253,6 @@
 
 <div class="pig2d-fullscreen" >
 </div>
-
 
 <div class='pig2d-templet' style="visibility: hidden">
 
@@ -226,13 +324,13 @@
     <div class='pig2d-sprite-templ'
          style="
          width: 100px;
-         height: 100px;
-         -webkit-transform-origin:50% 50%;
-         "
+         height: 100px;"
             >
     </div>
 
 </div>
+
+
 
 </body>
 </html>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title>sprite frame animation</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../libs/jquery.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../libs/backbone/underscore.js"></script>
+    <script src="../libs/backbone/json2.js"></script>
+    <script src="../libs/backbone/backbone.js"></script>
+
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <script src="../libs/pig2d/js/core.js"></script>
+    <script src="../libs/gl-matrix.js"></script>
+    <script src="../libs/pig2d/js/node2d.js"></script>
+
+    <script>
+
+        function animation(obj) {
+
+            var el = obj.get('el');
+
+            return function()  {
+
+                //코루틴 역활
+                setTimeout(function() {
+
+                    $(el).css('-webkit-transition','-webkit-transform '+ 0.1  +'s');
+                    obj.get('model').setPosition(10,10);
+                    obj.update(false);
+
+                    $(el).on('webkitTransitionEnd',function() {
+
+                        var time = (Math.random() * 5) + 0.1;
+                        var x = Math.random() * window.innerWidth;
+                        var y = Math.random() * window.innerHeight;
+                        var rot = Math.random() * 360;
+
+                        var scale = (Math.random() * 5) + 0.5;
+
+                        if(obj.get('model').get('translation').x == x) {
+                            x += 0.1;
+                        }
+                        $(el).css('-webkit-transition','-webkit-transform '+ time  +'s');
+                        obj.get('model').setPosition(x,y).setRotation(rot).setScale(scale,scale);
+                        obj.update(false);
+                    });
+
+                },0);
+
+            }
+        }
+
+        $(function() {
+
+            var rootNode = new Pig2d.node(
+                    {
+                        el : $('<div></div>'),
+                        model : new Pig2d.model(),
+                        name : 'sceneroot'
+                    }
+            );
+            rootNode.show(true).get('model').setPosition(0,0);
+            $('.pig2d-fullscreen').append(rootNode.get('el'));
+
+            //노드생성
+            var bkg_node = new Pig2d.node(
+                    {
+                        el : $('.pig2d-templet .pig2d-sprite-templ ').clone(),
+                        model : new Pig2d.model()
+                    }
+            );
+
+            bkg_node.show(true).get('model')
+                    .setPosition(0,0);
+
+            bkg_node.setMatrial({
+                texture : '../res/space_bkg.jpg',
+                texture_size : {
+                    width :4879,
+                    height : window.innerHeight
+                }
+            });
+            rootNode.add(bkg_node);
+
+            $(bkg_node.get('el')).css('-webkit-transition','-webkit-transform 10s');
+            $(bkg_node.get('el')).css('background-size', '4879px 100%');
+
+            setTimeout(function() {
+                bkg_node.get('model').translate(-100 ,new gbox3d.core.Vect2d(1,0));
+                bkg_node.update(false);
+            },0);
+
+
+            ///스프라이트 테스트..
+
+            //노드생성
+            var node = new Pig2d.node(
+                    {
+                        el : $('.pig2d-templet .pig2d-sprite-templ ').clone(),
+                        model : new Pig2d.SpriteModel( {
+
+                                    data :{
+                                        frames : [
+                                            {
+                                                sheet:[{ x:179,y:51,width:25,height:26,centerOffset: {x:-12,y:-21}}]
+                                            }
+                                        ]
+                                    }
+
+                                }
+                        )
+                    }
+            );
+
+            node.show(true).get('model').setPosition(0,0);
+            node.setMatrial({
+                texture : '../res/galaga.png'
+            });
+            rootNode.add(node);
+
+            var ani1 = animation(node);
+            ani1();
+
+
+            for(var i=0;i<16;i++) {
+                var clone_node = node.clone();
+                clone_node.show(true).get('model').setPosition(250,150);
+                rootNode.add(clone_node);
+                animation(clone_node)();
+            }
+
+            rootNode.update(true);
+
+            function callbackControl(movementX,movementY) {
+
+                //$(bkg_node.get('el')).css('-webkit-transition','-webkit-transform 3s');
+                bkg_node.get('model').translate(movementX * 5 ,new gbox3d.core.Vect2d(1,0));
+                bkg_node.update(false);
+
+                //rootNode.update(true);
+            }
+
+
+            //이벤트처리
+            document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+
+
+            function onDocumentMouseDown( event ) {
+
+                event.preventDefault();
+
+                document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+                document.addEventListener( 'mouseup', onDocumentMouseUp, false );
+
+            }
+
+            function onDocumentMouseMove( event ) {
+
+                var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+                var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+
+                callbackControl(movementX,-movementY);
+
+            }
+
+            function onDocumentMouseUp( event ) {
+
+                document.removeEventListener( 'mousemove', onDocumentMouseMove );
+                document.removeEventListener( 'mouseup', onDocumentMouseUp );
+
+            }
+
+            document.addEventListener( 'touchstart', onDocumentTouchStart, false );
+            document.addEventListener( 'touchmove', onDocumentTouchMove, false );
+
+            //터치 디바이스
+            var touchX,  touchY;
+
+            function onDocumentTouchStart( event ) {
+
+
+
+                event.preventDefault();
+
+                var touch = event.touches[ 0 ];
+
+                touchX = touch.screenX;
+                touchY = touch.screenY;
+
+
+            }
+
+            function onDocumentTouchMove( event ) {
+
+                //document.removeEventListener( 'touchmove', onDocumentTouchMove );
+
+                event.preventDefault();
+
+                var touch = event.touches[ 0 ];
+
+                var movementX =  (touchX - touch.screenX);
+                var movementY =  (touchY - touch.screenY);
+                touchX = touch.screenX;
+                touchY = touch.screenY;
+
+
+                callbackControl(-movementX,movementY);
+            }
+
+
+            ///창크기 변경..
+            window.addEventListener( 'resize', onWindowResize, false );
+
+            function onWindowResize() {
+
+                //renderer.setSize( window.innerWidth, window.innerHeight );
+                //renderer.render( scene, camera );
+
+                $(bkg_node.get('el')).css('height', window.innerHeight +'px');
+
+            }
+
+        });
+
+
+    </script>
+
+
+</head>
+
+<body>
+
+<div class="pig2d-fullscreen" >
+</div>
+
+
+<div class='pig2d-templet' style="visibility: hidden">
+
+    <div class='pig2d-sprite-templ'
+         style="
+         width: 100px;
+         height: 100px;
+         -webkit-tap-highlight-color: rgba(0,0,0,0);
+    -webkit-user-select: none;
+         "
+            >
+    </div>
+
+</div>
+
+</body>
+</html>
