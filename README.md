@@ -33,16 +33,14 @@ node , model , scenemanager
     
 3. game loop
 
-requestAnimationFrame(
-            function loop() {
-
-                //씬메니져 업데이트
-                //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
-                Smgr.updateAll();
-
-                requestAnimationFrame(loop);
-
-            }
-
+    requestAnimationFrame(
+      function loop() {
+      	Smgr.updateAll();
+        
+      }
+            
     );
+
+
+
 
