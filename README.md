@@ -31,15 +31,7 @@ node , model , scenemanager
 
     Smgr.add(node);
     
-3. game loop
 
-    requestAnimationFrame(
-      function loop() {
-      	Smgr.updateAll();
-        
-      }
-            
-    );
 
 
 
