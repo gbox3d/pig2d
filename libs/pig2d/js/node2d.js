@@ -60,6 +60,8 @@ Pig2d.model = Backbone.Model.extend({
         this.attributes.flipX = false;
         this.attributes.flipY = false;
 
+        this.attributes.cssupdate = true;
+
         this.attributes.offset = {
             x:0,
             y:0
@@ -68,6 +70,20 @@ Pig2d.model = Backbone.Model.extend({
     defaults: {
         rotation : 0
     },
+
+    /*
+    getTransform : function() {
+
+        return this.attributes.matrix;
+
+    },
+    setTransform : function(mat) {
+
+        this.attributes.matrix.clone(mat);
+
+    },
+    */
+
     getPosition : function() {
         return this.attributes.translation;
     },
@@ -96,7 +112,6 @@ Pig2d.model = Backbone.Model.extend({
     },
     getScale : function() {
 
-//        this.attributes.scale.set(x,y);
         return this.attributes.scale;
 
     },
@@ -129,6 +144,89 @@ Pig2d.model = Backbone.Model.extend({
         };
 
     }(),
+
+    ////////////// animator
+
+    setupTransition : function(param) {
+        var element = this.get('element');
+
+        element.style.WebkitTransition = '';
+        this.attributes.TransitionEndCallBack = param.TransitionEndCallBack;
+
+        element.addEventListener('webkitTransitionEnd',function() {
+
+            element.style.WebkitTransition = '';
+            this.attributes.cssupdate = true;
+
+            if(this.attributes.TransitionEndCallBack != undefined) {
+
+                this.attributes.TransitionEndCallBack.apply(this);
+
+            }
+
+        }.bind(this),false);
+
+    },
+    transition : function(param) {
+
+        var element = this.get('element');
+
+        if(element.style.WebkitTransition !== '')
+            return;
+
+        if(param.position != undefined) {
+
+            if(param.position.X == this.attributes.translation.X && param.position.Y == this.attributes.translation.Y ) {
+
+            }
+            else {
+                if(element.style.WebkitTransition === '') {
+                    element.style.WebkitTransition = '-webkit-transform ' + param.time + 's';
+                    this.setPosition(param.position.X,param.position.Y);
+                }
+            }
+        }
+
+        if(param.rotation != undefined) {
+            if(param.rotation == this.attributes.rotation) {
+
+            }
+            else {
+                if(element.style.WebkitTransition === '') {
+                    element.style.WebkitTransition = '-webkit-transform ' + param.time + 's';
+
+                }
+                this.setRotation(param.rotation);
+
+            }
+        }
+        if(param.scale != undefined) {
+            if(param.scale.X == this.attributes.scale.X && param.scale.Y == this.attributes.scale.Y) {
+
+            }
+            else {
+                if(element.style.WebkitTransition === '') {
+                    element.style.WebkitTransition = '-webkit-transform ' + param.time + 's';
+
+                }
+                this.setScale(param.scale.X,param.scale.Y);
+
+            }
+        }
+
+    },
+    clearTransition : function() {
+
+        var el = this.get('element');
+        el.removeEventListener('webkitTransitionEnd');
+        el.style.WebkitTransition = '';
+        this.attributes.cssupdate = true;
+
+        console.log(el.style.WebkitTransform);
+
+
+    },
+    ///////////////
     setTexture : function(param) {
 
         var el = this.get('element');
@@ -146,6 +244,8 @@ Pig2d.model = Backbone.Model.extend({
 
     },
     updateCSS : function() {
+
+        if(this.attributes.cssupdate == false) return;
 
         var trans = this.attributes.translation;
         var rot = this.attributes.rotation;
@@ -186,6 +286,12 @@ Pig2d.model = Backbone.Model.extend({
         el.style.oTransform = css_val;
         el.style.transform = css_val;
 
+        //트랜지션 상태이면 css를 더이상 업데이트 못하게 한다
+        if(el.style.WebkitTransition !== '') {
+            this.attributes.cssupdate = false;
+        }
+
+
         return this;
         //브라우져 호환성을 위한 코드
 
@@ -194,6 +300,8 @@ Pig2d.model = Backbone.Model.extend({
     destroy : function() {
 
         var el = this.get('element');
+
+        el.removeEventListener('webkitTransitionEnd');
 
         el.parentNode.removeChild(el);
 
@@ -468,23 +576,6 @@ Pig2d.node = Backbone.Model.extend({
 
         //딥 클로닝
 
-        /*
-
-         var el = this.attributes.el[0].cloneNode(false);
-
-         //var clone_el = $(this.attributes.el).clone();
-         var clone_el = $(el);
-         $(clone_el).removeAttr('id');
-
-         var clone_model = this.attributes.model.clone();
-
-         var node  = Backbone.Model.prototype.clone.call(this);
-
-         node.attributes.el = clone_el;
-         node.attributes.model = clone_model;
-
-         console.log(el);
-         */
         var node  = Backbone.Model.prototype.clone.call(this);
 
         if(node.get('model')) {
@@ -500,14 +591,6 @@ Pig2d.node = Backbone.Model.extend({
 
             node.add(chiledren[i].clone());
         }
-
-        //역참조 오류관련해서 반드시 자기 자신의 노드로 한번 갱신 해주어야한다.
-
-        /*
-         node.get('model').set({
-         node : node
-         });
-         */
 
         return node;
     },
@@ -590,14 +673,10 @@ Pig2d.node = Backbone.Model.extend({
 
     },
     show : function(visible) {
-        //todo
 
         console.log(this.get('model').get('element'));
 
         this.get('model').get('element').style.visibility = visible ? 'visible' : 'hidden';
-
-
-
     }
 
 });
