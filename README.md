@@ -1,7 +1,7 @@
 pig2d
 =====
 
-fast and light weight html5 2d game engine
+fast and samll but strong html5 2d game engine
 
 이 엔진은 세가지 기본 구성요소인 
 node , model , scenemanager
