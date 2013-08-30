@@ -22,12 +22,13 @@ node , model , scenemanager
 
 ```
 
-[기본샘플 보기](http://gbox3d.github.io/pig2d/sample/1.1.simplesample.html)
+
 
 기본 1 형식
 
 전체화면모드로 씬을 만들고 그안에서 노드로 씬을 구성합니다.
 
+[기본샘플 보기](http://gbox3d.github.io/pig2d/sample/1.1.simplesample.html)
 
 ```html
 
