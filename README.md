@@ -1,7 +1,7 @@
 pig2d
 =====
 
-#### JavaScript&CSS3 2D game engine ####
+#### HTML5 2D game engine ####
 
 fast and samll but strong html5 2d game engine
 
