@@ -9,7 +9,10 @@ node , model , scenemanager
 
 씬매니져를 만들고 노드를 만들어서 씬매니져에 추가 시켜는 형식으로 사용합니다.
 
+엔진을 사용하기 위해서 헤더에 추가 시켜야할 것들 입니다.
+
 ```html
+<link rel="stylesheet" href="../libs/pig2d/css/core.css" />
 
 <script src="../libs/jquery-2.0.3.min.js"></script>
 
