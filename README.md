@@ -37,7 +37,6 @@ CDN 버전
 
     
 <script src="https://rawgithub.com/gbox3d/pig2d/master/libs/backbone/underscore.js"></script>
-<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/backbone/json2.js"></script>
 <script src="https://rawgithub.com/gbox3d/pig2d/master/libs/backbone/backbone.js"></script>
 
 
