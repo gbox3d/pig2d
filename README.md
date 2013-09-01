@@ -27,6 +27,26 @@ node , model , scenemanager
 
 ```
 
+CDN 버전으로 인클루드 하기 
+
+```html
+<link href="https://rawgithub.com/gbox3d/pig2d/master/libs/pig2d/css/core.css" rel="stylesheet"></link>
+
+    
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+
+    
+<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/backbone/underscore.js"></script>
+<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/backbone/json2.js"></script>
+<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/backbone/backbone.js"></script>
+
+
+    
+<script src="http://gbox3d.github.io/pig2d/libs/gl-matrix-min.js"></script>
+<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/pig2d/js/core.js"></script>
+<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/pig2d/js/node2d.js"></script>
+
+```
 
 
 기본 1 형식
