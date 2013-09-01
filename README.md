@@ -150,8 +150,7 @@ https://rawgithub.com/gbox3d/  대신에  http://gbox3d.github.io/ 로 해주셔
 
 ```
 
-연습용 기본예제 
-[jsfiddle](http://jsfiddle.net/gbox3d/VhSgu/)
+[jsfiddle 연습용 예제](http://jsfiddle.net/gbox3d/VhSgu/)
 
 
 
