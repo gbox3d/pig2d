@@ -27,7 +27,7 @@ node , model , scenemanager
 
 ```
 
-CDN 버전으로 인클루드 하기 
+CDN 버전
 
 ```html
 <link href="https://rawgithub.com/gbox3d/pig2d/master/libs/pig2d/css/core.css" rel="stylesheet"></link>
@@ -42,12 +42,13 @@ CDN 버전으로 인클루드 하기
 
 
     
-<script src="http://gbox3d.github.io/pig2d/libs/gl-matrix-min.js"></script>
+<script src="https://rawgithub.com/gbox3d/pig2d/libs/gl-matrix-min.js"></script>
 <script src="https://rawgithub.com/gbox3d/pig2d/master/libs/pig2d/js/core.js"></script>
 <script src="https://rawgithub.com/gbox3d/pig2d/master/libs/pig2d/js/node2d.js"></script>
 
 ```
 
+https://rawgithub.com/gbox3d/  대신에  http://gbox3d.github.io/ 로 해주셔도 됩니다.
 
 기본 1 형식
 
