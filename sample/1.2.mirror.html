@@ -39,35 +39,34 @@
 
 
     var Smgr = new Pig2d.SceneManager({
-        container :  $('.pig2d-window')[0]
+        container :  document.querySelector('.pig2d-window'),
+        window_size : { //클리핑 범위 지정
+            width : 320,
+            height: 240
+        }
 
     });
 
     //노드생성
-    var node = Pig2d.util.createImage({
-        texture : '../res/atat/atat-body.png',
-        texture_size : {
-            width :298,
-            height : 191
+    var node = Smgr.addImageNode({
+        src : '../res/atat/atat-body.png',
+        onload : function(node) {
+            console.log(node.get('model').get('imgObj').src + ' loaded ');
         }
-
     });
-    node.get('model').setPosition(0,0);
-    Smgr.add(node);
 
+    node.get('model').setPosition(160,120);
     node.get('model').attributes.flipX = true;
 
 
     document.querySelector('#btn-flip-x').addEventListener('click',function(evt) {
-
-        node.get('model').attributes.flipX = !(node.get('model').attributes.flipX);
-
+        //node.get('model').attributes.flipX = !(node.get('model').attributes.flipX);
+        node.get('model').set('flipX',!(node.get('model').get('flipX')));
     },false);
 
     document.querySelector('#btn-flip-y').addEventListener('click',function(evt) {
-
-        node.get('model').attributes.flipY = !(node.get('model').attributes.flipY);
-
+        //node.get('model').attributes.flipY = !(node.get('model').attributes.flipY);
+        node.get('model').set('flipY',!(node.get('model').get('flipY')));
     },false);
 
 

@@ -156,27 +156,14 @@
     //////////////////////////////////
     //오브잭트들 만들기( 이미지 )
 
-    var node3 = new Pig2d.node({name:'node3'});
-    var model = new Pig2d.model();
-
-    model.setTexture({
-        texture : '../res/atat/atat-skull.png',
-        texture_size : {
-            width :186,
-            height : 123
+    var node3 = Smgr.addImageNode({
+        src : '../res/atat/atat-skull.png',
+        onload : function(node) {
+            console.log(node.get('model').get('imgObj').src + ' loaded ');
         }
     });
-    model.setPosition(0,0);
-
-    node3.set({model : model});
 
     node1.add(node3);
-
-
-
-    /////////////////////////////////
-
-
 
     document.querySelector('#btn-move1').addEventListener('click',function(evt) {
 

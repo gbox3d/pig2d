@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
 
-    <title> 씬 계층구조 예제  </title>
+    <title> center pos sample </title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
 
@@ -14,78 +14,15 @@
 
     <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
     <script src="../libs/backbone/underscore.js"></script>
-    <!--<script src="../libs/backbone/json2.js"></script>-->
     <script src="../libs/backbone/backbone.js"></script>
 
 
     <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
     <script src="../libs/gl-matrix-min.js"></script>
+
     <script src="../libs/pig2d/js/core.js"></script>
     <script src="../libs/pig2d/js/node2d.js"></script>
-
-    <script>
-
-        $(function() {
-
-            var Smgr = new Pig2d.SceneManager({
-                container : $('.pig2d-fullscreen')[0]
-            });
-
-            ///////////////////////////////////////////////////////////////
-
-            //스프라이트 노드 만들어서 씬노드메니져에 추가하기
-            var node = Smgr.addImageNode({
-                src : '../res/atat/atat-neck.png'
-            });
-            node.get('model').setPosition(100,150);
-
-
-            //자식노드 만들기
-            var node2 = Smgr.addImageNode({
-                src : '../res/atat/atat-skull.png'
-            });
-            node2.get('model').setPosition(100,0);
-
-            node.add(node2);
-
-            /////////////////////////////////////////////////////////////
-            //컨트롤로 설정
-            Pig2d.util.setup_pig2dTestController(
-                    document, //이벤트를 받을 대상 (여기서는 화면 전체임)
-                    node//조종할 대상이 되는 오브잭트
-            );
-
-            //퍼포먼트 테스트용 정보
-            var mytimer = new gbox3d.core.Timer();
-            var framerate_info = document.querySelector("#text-framerate-info");
-            var frame_total = 0;
-            var loop_count = 0;
-
-            //게임 루프
-            requestAnimationFrame(
-                    function loop() {
-
-                        var deltaTime = mytimer.getDeltaTime();
-                        frame_total += Math.round(1.0 / deltaTime);
-
-                        loop_count++;
-
-                        framerate_info.innerText = Math.round(frame_total / loop_count);
-
-                        //씬메니져 업데이트
-                        //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
-                        Smgr.updateAll();
-
-                        requestAnimationFrame(loop);
-
-                    }
-
-            );
-
-
-        });
-
-    </script>
+    <!--<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/pig2d/js/node2d.js"></script>-->
 
 </head>
 
@@ -122,7 +59,8 @@
             width:32px;
             height:32px;
             -webkit-transform-origin:0% 0%;
-            -webkit-transform :translate(100px,100px)"
+            /*-webkit-transform :translate(100px,100px)*/
+            "
             >
 
         <svg xmlns="http://www.w3.org/2000/svg" version="1.1"
@@ -146,7 +84,8 @@
             width:32px;
             height:32px;
             -webkit-transform-origin:0% 0%;
-            -webkit-transform :translate(100px,100px)"
+            /*-webkit-transform :translate(100px,100px)*/
+            "
             >
 
         <svg xmlns="http://www.w3.org/2000/svg" version="1.1"
@@ -171,6 +110,86 @@
 
 </div>
 
+<script>
+
+    //씬메니져 생성하기
+    var Smgr = new Pig2d.SceneManager({
+        container : document.querySelector('.pig2d-fullscreen')
+    });
+
+
+    function addCross(x,y) {
+        var node2 = new Pig2d.node();
+        var model = new Pig2d.model();
+        var element = document.querySelector('.pig2d-templet .pig2d-templ-cross').cloneNode(true);
+
+        model.get('element').appendChild(element);
+        model.setPosition(x,y);
+
+        node2.set({model : model});
+        Smgr.add(node2);
+    }
+
+
+
+    //스프라이트 노드 만들어서 씬노드메니져에 추가하기 디폴트는 이미지의 중앙이다.(0,0)
+    var node = Smgr.addImageNode({
+        src : '../res/atat/atat-body.png',
+        onload : function(node) {
+            console.log(node.get('model').get('imgObj').src + ' loaded ');
+        },
+        center : {
+            x : 0,
+            y : 0
+        }
+    });
+    node.get('model').setPosition(300,200);
+    addCross(300,200);
+
+    //원점을 100,100 으로 이동시키기
+    var node = Smgr.addImageNode({
+        src : '../res/atat/atat-body.png',
+        onload : function(node) {
+            console.log(node.get('model').get('imgObj').src + ' loaded ');
+        },
+        center : {
+            x : 100,
+            y : 100
+        }
+    });
+    node.get('model').setPosition(300,400);
+    addCross(300,400);
+
+
+
+    //타이머 설정 및 퍼포먼트 테스트용 정보
+    var mytimer = new gbox3d.core.Timer();
+    var framerate_info = document.querySelector("#text-framerate-info");
+    var frame_total = 0;
+    var loop_count = 0;
+
+    //게임 루프
+    requestAnimationFrame(
+            function loop() {
+
+                var deltaTime = mytimer.getDeltaTime();
+                frame_total += Math.round(1.0 / deltaTime);
+
+                loop_count++;
+
+                framerate_info.innerText = Math.round(frame_total / loop_count);
+
+                //씬메니져 업데이트
+                //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+                Smgr.updateAll();
+
+                requestAnimationFrame(loop);
+
+            }
+
+    );
+
+</script>
 
 
 

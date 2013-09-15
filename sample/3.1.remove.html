@@ -43,7 +43,11 @@
 
     //씬메니져 생성하기
     var Smgr = new Pig2d.SceneManager({
-        container : $('.pig2d-window')[0]
+        container : document.querySelector('.pig2d-window'),
+        window_size : {
+            width:320,
+            height:240
+        }
     });
 
     //////////////////////////////////

@@ -47,71 +47,43 @@
     //////////////////////////////////
     //오브잭트들 만들기( 이미지 )
 
-    var node1 = new Pig2d.node({name:'node1'});
-    var model = new Pig2d.model();
-
-    model.setTexture({
-        texture : '../res/atat/atat-skull.png',
-        texture_size : {
-            width :186,
-            height : 123
+    var node1 = Smgr.addImageNode({
+        src : '../res/atat/atat-neck.png',
+        onload : function(node) {
+            console.log(node.get('model').get('imgObj').src + ' loaded ');
         }
     });
-    model.setPosition(100,100);
 
-    node1.set({model : model});
-
-    Smgr.add(node1);
-
-
-
+    node1.get('model').setPosition(160,120);
     /////////////////////////////////
 
     //////////////////////////////////
     //오브잭트들 만들기( 이미지 )
 
-    var node2 = new Pig2d.node({name:'node2'});
-    var model = new Pig2d.model();
-
-    model.setTexture({
-        texture : '../res/atat/atat-skull.png',
-        texture_size : {
-            width :186,
-            height : 123
+    var node2 = Smgr.addImageNode({
+        src : '../res/atat/atat-skull.png',
+        onload : function(node) {
+            console.log(node.get('model').get('imgObj').src + ' loaded ');
         }
     });
-    model.setPosition(50,0);
-
-    node2.set({model : model});
+    node2.get('model').setPosition(100,0);
 
     node1.add(node2);
-
-
-
     /////////////////////////////////
 
 
     //////////////////////////////////
     //오브잭트들 만들기( 이미지 )
 
-    var node3 = new Pig2d.node({name:'node3'});
-    var model = new Pig2d.model();
-
-    model.setTexture({
-        texture : '../res/atat/atat-skull.png',
-        texture_size : {
-            width :186,
-            height : 123
+    var node3 = Smgr.addImageNode({
+        src : '../res/atat/atat-shin.png',
+        onload : function(node) {
+            console.log(node.get('model').get('imgObj').src + ' loaded ');
         }
     });
-    model.setPosition(100,0);
-
-    node3.set({model : model});
+    node3.get('model').setPosition(0,60);
 
     node2.add(node3);
-
-
-
     /////////////////////////////////
 
 

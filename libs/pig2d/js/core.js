@@ -465,15 +465,23 @@ gbox3d.core.Vect2d.prototype.getAngle = function() {
 
 	return tmp;
 }
+gbox3d.core.Vect2d.prototype.getDistanceTo = function(b) {
+    var a = b.X - this.X;
+    var d = b.Y - this.Y;
+
+    return Math.sqrt(a * a + d * d);
+}
 
 ///////////////////////////////////////////////////////////
 //box 2D
 
 gbox3d.core.Box2d = function(param) {
 
-    this.topLeft = param.topleft;
-    this.bottomRight = param.bottomright;
-
+    //param = param || {topleft:new,bottomright:0};
+    if(param) {
+        this.topLeft = param.topleft;
+        this.bottomRight = param.bottomright;
+    }
 };
 
 gbox3d.core.Box2d.prototype.ptInBox = function(x,y) {
@@ -486,6 +494,45 @@ gbox3d.core.Box2d.prototype.ptInBox = function(x,y) {
 
     return false;
 
+}
+
+//DOM 앨리먼트의 충돌 사각형 영역 얻기
+gbox3d.core.Box2d.prototype.getCollisionArea = function (node) {
+
+    var width =  parseInt( node.css('width').slice(0,-2));
+    var height = parseInt (node.css('height').slice(0,-2));
+
+    //console.log(node.css('-webkit-transform'));
+
+    var sx,sy
+    var strmat = node.css('-webkit-transform');
+    if(strmat == 'none') {
+        sx = 0;
+        sy = 0;
+
+    }
+    else {
+
+        strmat = strmat.slice(0,-1);
+        strmat = strmat.slice(7,strmat.length);
+
+        var temp = strmat.split(',');
+
+        sx = parseInt( temp[4]);
+        sy = parseInt( temp[5] );
+
+        //console.log(strmat);
+    }
+
+    this.topLeft = new gbox3d.core.Vect2d(sx,sy);
+    this.bottomRight = new gbox3d.core.Vect2d(sx+width,sy+height);
+
+//    return new gbox3d.core.Box2d({
+//
+//        topleft :  new gbox3d.core.Vect2d(sx,sy),
+//        bottomright: new gbox3d.core.Vect2d(sx+width,sy+height)
+//
+//    });
 }
 
 

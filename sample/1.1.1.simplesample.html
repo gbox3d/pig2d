@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
 
-    <title> 클로닝 </title>
+    <title> simple sample </title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
 
@@ -19,15 +19,17 @@
 
     <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
     <script src="../libs/gl-matrix-min.js"></script>
+
     <script src="../libs/pig2d/js/core.js"></script>
     <script src="../libs/pig2d/js/node2d.js"></script>
+    <!--<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/pig2d/js/node2d.js"></script>-->
 
 </head>
 
 <body>
 
 <div class="pig2d-fullscreen" >
-    <p id='text-framerate-info'></p>
+    <p id ='text-framerate-info' style="position: absolute" >frame rate</p>
 </div>
 
 <script>
@@ -37,27 +39,25 @@
         container : document.querySelector('.pig2d-fullscreen')
     });
 
+    //스프라이트 노드 만들어서 씬노드메니져에 추가하기
+
     var node = Smgr.addImageNode({
-        src : '../res/atat/atat-skull.png',
+        src : '../res/atat/atat-body.png',
         onload : function(node) {
-
-            //console.log(node.get('model').get('imgObj').src + ' loaded ');
-
-            //클로닝
-            var node_clone = node.clone();
-            node_clone.get('model').setPosition(200,100);
-            Smgr.add(node_clone);
-
-            //img 태그를 클로닝을 하면 이미지 재로딩하지 않는다.
-            var node_clone = node_clone.clone();
-            node_clone.get('model').setPosition(300,100);
-            Smgr.add(node_clone);
+            console.log(node.get('model').get('imgObj').src + ' loaded ');
         }
     });
-    node.get('model').setPosition(100,100);
 
-    //////////////////////////////////////////////////////////////////////
-    //퍼포먼트 테스트용 정보
+    node.get('model').setPosition(300,200);
+
+
+    //컨트롤러 설정
+    Pig2d.util.setup_pig2dTestController(
+            document, //이벤트를 받을 대상 (여기서는 화면 전체임)
+            node//조종할 대상이 되는 오브잭트
+    );
+
+    //타이머 설정 및 퍼포먼트 테스트용 정보
     var mytimer = new gbox3d.core.Timer();
     var framerate_info = document.querySelector("#text-framerate-info");
     var frame_total = 0;
@@ -74,19 +74,19 @@
 
                 framerate_info.innerText = Math.round(frame_total / loop_count);
 
-
-
                 //씬메니져 업데이트
                 //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
                 Smgr.updateAll();
 
                 requestAnimationFrame(loop);
+
             }
+
     );
 
 </script>
 
 
-</body>
 
+</body>
 </html>

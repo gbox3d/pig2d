@@ -34,5 +34,7 @@ root {
 
 .pig2d-node {
     position: absolute;
+    -webkit-transform-origin : 0% 0%;
+
 }
 

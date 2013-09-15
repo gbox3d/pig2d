@@ -10,6 +10,12 @@
  *
  * changes..
 
+ -13.9.5
+ backbone 1.0.0 버전으로 업글
+
+ -13.9.2
+ 씬 메니져 클리핑 영역 지정추가
+
  -13.8.27
  node.removeChild 기능추가
  node.show
@@ -50,7 +56,15 @@ Pig2d.model = Backbone.Model.extend({
             element.setAttribute('id',name);
         }
 
-        element.classList.add('pig2d-node');
+
+        //2.3 이전 버전을 위한
+        if(element.classList != undefined) {
+            element.classList.add('pig2d-node');
+        }
+        else {
+            $(element).addClass('pig2d-node');
+        }
+
 
         this.attributes.element = element;
 
@@ -166,10 +180,19 @@ Pig2d.model = Backbone.Model.extend({
 
         }.bind(this),false);
 
+
+
+
+//        if(param.timing_function != undefined) {
+//            element.style.webkitTransitionTimingFunction = 'linear';
+//        }
+
     },
     transition : function(param) {
 
         var element = this.get('element');
+
+        param.timing_function = param.timing_function ? param.timing_function : 'linear';
 
         if(element.style.WebkitTransition !== '')
             return;
@@ -181,7 +204,7 @@ Pig2d.model = Backbone.Model.extend({
             }
             else {
                 if(element.style.WebkitTransition === '') {
-                    element.style.WebkitTransition = '-webkit-transform ' + param.time + 's';
+                    element.style.WebkitTransition = '-webkit-transform ' + param.time + 's ' + param.timing_function;
                     this.setPosition(param.position.X,param.position.Y);
                 }
             }
@@ -193,7 +216,7 @@ Pig2d.model = Backbone.Model.extend({
             }
             else {
                 if(element.style.WebkitTransition === '') {
-                    element.style.WebkitTransition = '-webkit-transform ' + param.time + 's';
+                    element.style.WebkitTransition = '-webkit-transform ' + param.time + 's '+ param.timing_function;
 
                 }
                 this.setRotation(param.rotation);
@@ -206,7 +229,7 @@ Pig2d.model = Backbone.Model.extend({
             }
             else {
                 if(element.style.WebkitTransition === '') {
-                    element.style.WebkitTransition = '-webkit-transform ' + param.time + 's';
+                    element.style.WebkitTransition = '-webkit-transform ' + param.time + 's ' + param.timing_function;
 
                 }
                 this.setScale(param.scale.X,param.scale.Y);
@@ -218,12 +241,18 @@ Pig2d.model = Backbone.Model.extend({
     clearTransition : function() {
 
         var el = this.get('element');
+
         el.removeEventListener('webkitTransitionEnd');
         el.style.WebkitTransition = '';
         this.attributes.cssupdate = true;
 
-        console.log(el.style.WebkitTransform);
 
+                             /*
+        var mat = el.style.WebkitTransform.slice(7,el.style.WebkitTransform.length - 1);
+        console.log(mat);
+        mat = mat.split(',');
+        this.setPosition(mat[4],mat[5]);
+        */
 
     },
     ///////////////
@@ -237,7 +266,8 @@ Pig2d.model = Backbone.Model.extend({
         }
         if(param.texture != undefined) {
 
-            $(el).css('background-image','url('+ param.texture +')');
+            el.style.backgroundImage = 'url('+ param.texture +')';
+//            $(el).css('background-image','url('+ param.texture +')');
         }
 
         return this;
@@ -309,7 +339,7 @@ Pig2d.model = Backbone.Model.extend({
     clone : function() {
         var model  = Backbone.Model.prototype.clone.call(this);
 
-        //console.log(model);
+        console.log(model);
 
         model.set("element",this.get('element').cloneNode(true));
 
@@ -327,12 +357,15 @@ Pig2d.SpriteModel = Pig2d.model.extend({
         Pig2d.model.prototype.initialize.call(this);
         this.attributes.currentFrame = 0;
 
-        var element = document.createElement('div');
+        var sheet = document.createElement('canvas');
 
-        element.classList.add('pig2d-sheet');
+        sheet.classList.add('pig2d-sheet');
+        sheet.style.position = 'absolute';
 
-        this.get('element').appendChild(element);
+        this.get('element').appendChild(sheet);
+        this.set('sheet',sheet);
 
+        /*
         var frame = this.attributes.data.frames[0];
         var sheet = frame.sheets[0];
 
@@ -343,11 +376,23 @@ Pig2d.SpriteModel = Pig2d.model.extend({
         sheet_el.style.backgroundImage = '';
         sheet_el.style.backgroundImage = 'url('+ sheet.texture +')';
         element.appendChild(sheet_el);
+        */
 
+//        this.set('currentFrame',0);
+        this.setFrame(0);
+    },
+    clone : function() {
+
+        var model  = Backbone.Model.prototype.clone.call(this);
+        console.log('SpriteModel clone');
+        //model.set("element",this.get('element').cloneNode(true));
+
+        return model;
 
     },
     updateCSS : function () {
 
+        /*
         var frame = this.attributes.data.frames[this.attributes.currentFrame];
 
         if(frame.sheets.length <= 0)
@@ -375,6 +420,7 @@ Pig2d.SpriteModel = Pig2d.model.extend({
             sheet_el.style.height = sheet.height + 'px';
 
         }
+        */
 
 
         return Pig2d.model.prototype.updateCSS.call(this);
@@ -384,10 +430,26 @@ Pig2d.SpriteModel = Pig2d.model.extend({
     //애니메이션 관련 기능
     //////////////////////////////////////////////
     setFrame : function(index)  {
-
         //프레임 노드 얻기
-        this.set('currentFrame',0);
-        this.updateCSS();
+        this.set('currentFrame',index);
+
+        var sheet = this.get('sheet');
+        var frame = this.attributes.data.frames[this.attributes.currentFrame];
+        var sheet_data = frame.sheets[0];
+
+        sheet.width = sheet_data.width;
+        sheet.height = sheet_data.height;
+
+        sheet.style.left =  sheet_data.centerOffset.x + 'px';
+        sheet.style.top = sheet_data.centerOffset.y + 'px';
+
+        var ctx		= sheet.getContext('2d');
+        ctx.drawImage(
+            this.get('imgObj'),
+            -sheet_data.bp_x,-sheet_data.bp_y,sheet.width,sheet.height,
+            0,0,sheet.width,sheet.height
+        );
+
         return this;
     },
     start_animate : function(param) {
@@ -401,25 +463,44 @@ Pig2d.SpriteModel = Pig2d.model.extend({
     },
     animate : function(param) {
 
-//        var element =  this.get('node').get('el');
+        param = param || {};
+
+        var loop = param.loop || false;
+
         var frameindex =  this.get('currentFrame');
+
+        //var frameindex = startFrame;
+
         var data = this.get('data');
-        var delay = data.frames[frameindex].delay;
-        //var that = this;
 
 
-        return function() {
+        return (function() {
 
             if(frameindex >= data.frames.length-1) {
-                param.endCallBack ? param.endCallBack() : (function(){})();
+                param.endCallBack ? param.endCallBack(this) : (function(){})();
+
+                if(loop == true) {
+                    var delay = data.frames[frameindex].delay;
+
+                    //param.startFrame = startFrame;
+                    //frameindex = 0;
+                    if(param.startFrame != undefined) {
+                        this.set('currentFrame',param.startFrame - 1);
+                    }
+
+                    setTimeout(this.animate(param).bind(this),1000);
+                }
+
             }
             else {
-                this.set('currentFrame', ++frameindex);
+                //this.set('currentFrame', ++frameindex);
+                ++frameindex;
+                this.setFrame(frameindex);
+                var delay = data.frames[frameindex].delay;
                 setTimeout(this.animate(param).bind(this),delay);
             }
-            this.updateCSS();
-
-        }
+            //this.updateCSS();
+        }).bind(this);
 
     }
 
@@ -458,7 +539,10 @@ Pig2d.SlotSpriteModel = Pig2d.model.extend( {
         while (element.firstChild) {
             element.removeChild(element.firstChild);
         }
-        element.appendChild( imglist[this.get('data').animation[index].name] );
+
+        var imgElem = imglist[this.get('data').animation[index].name];
+
+        element.appendChild( imgElem);
 
         this.attributes.currentFrame = index;
 
@@ -494,14 +578,22 @@ Pig2d.SlotSpriteModel = Pig2d.model.extend( {
 
             var cuurentframe = model.get('currentFrame');
 
+            if(param.keyFrame) {
+                if(cuurentframe == param.keyFrame) {
+                    param.callbackKeyFrame(model);
+                }
+            }
 
             var nextframe = (cuurentframe + 1);
 
             if(nextframe >= endFrame) {  //마지막프레임까지 진행되면...
-                nextframe = startFrame;
+
 //                console.log( nextframe + ',' +accTick);
-                accTick = 0
-                model.setFrame(startFrame);
+                if( ani[nextframe].time < accTick) {
+                    accTick = 0
+                    model.setFrame(startFrame);
+                    nextframe = startFrame;
+                }
             }
             else {
                 if( ani[nextframe].time < accTick) {
@@ -555,7 +647,9 @@ Pig2d.SlotSpriteModel = Pig2d.model.extend( {
 Pig2d.node = Backbone.Model.extend({
     initialize: function() {
         this.attributes.chiledren = new Array();
-        _.bindAll(this);
+
+//        _.bindAll(this,"update","clone");
+
     },
     update: function(applyChild) {
 
@@ -685,7 +779,10 @@ Pig2d.node = Backbone.Model.extend({
 ///
 Pig2d.SceneManager = Backbone.Model.extend({
 
-    initialize: function() {
+    initialize: function(param) {
+
+
+       // param.window_size = param.window_size ? param.window_size : {};
 
         var rootNode = new Pig2d.node(
             {
@@ -697,8 +794,19 @@ Pig2d.SceneManager = Backbone.Model.extend({
         );
         rootNode.get('model').setPosition(0,0);
         //this.attributes.container.append(rootNode.get('model').get('element'));
-        this.attributes.container.appendChild(rootNode.get('model').get('element'));
 
+        var rootElement = rootNode.get('model').get('element');
+
+
+        if(param.window_size != undefined) {
+            rootElement.style.overflow = 'hidden';
+            rootElement.style.width = param.window_size.width + 'px' ;
+            rootElement.style.height = param.window_size.height + 'px' ;
+        }
+
+
+
+        this.attributes.container.appendChild(rootElement);
         this.attributes.rootNode = rootNode;
     },
     updateAll : function() {
@@ -717,8 +825,39 @@ Pig2d.SceneManager = Backbone.Model.extend({
 
     },
     addImageNode : function(param) {
-        var node = Pig2d.util.createImage(param.img_info);
+
+        //var node = Pig2d.util.createImage(param.img_info);
+        //this.add(node,param.parent);
+
+        var center_x = param.center ? param.center.x : 0;
+        var center_y = param.center ? param.center.y : 0;
+
+        var node = Pig2d.util.createDummy();
+
+        var imgObj = new Image();
+        imgObj.onload = function(evt) {
+
+            //console.log(this.width);
+
+            imgObj.style.position = 'absolute';
+            imgObj.style.left = -this.width/2 + parseInt(center_x) + 'px';
+            imgObj.style.top = -this.height/2 + parseInt(center_y) + 'px';
+
+            var element = node.get('model').get('element');
+
+            element.appendChild(imgObj);
+
+            node.get('model').set('imgObj', imgObj);
+
+            if(param.onload) {
+                param.onload(node);
+            }
+
+        }
+        imgObj.src = param.src;
+
         this.add(node,param.parent);
+
         return node;
     },
     addSpriteSceneNode : function(param) {
@@ -740,6 +879,44 @@ Pig2d.SceneManager = Backbone.Model.extend({
 
 Pig2d.util = {
 
+    ///////////////
+    createDummy : function() {
+
+        return new Pig2d.node({
+            model:new Pig2d.model()
+        });
+
+    },
+    //////////////////
+    //캔버스 기반의 스프라이트 생성
+    createSlicedImage : function(param) {
+
+        var model = new Pig2d.model();
+        var element = model.get('element');
+
+        var cutx = param.cutx || 0;
+        var cuty = param.cuty || 0;
+        var basex = param.basex || 0;
+        var basey = param.basey || 0;
+
+        var canvas	= document.createElement( 'canvas' );
+        canvas.width	= param.width || param.imgObj.width;
+        canvas.height	= param.height || param.imgObj.height;
+
+        canvas.style.position = 'absolute';
+        canvas.style.left =  basex + 'px';
+        canvas.style.top = basey + 'px';
+        element.appendChild(canvas);
+
+        var ctx		= canvas.getContext('2d');
+        ctx.drawImage(param.imgObj,cutx,cuty,canvas.width,canvas.height,0,0,canvas.width,canvas.height);
+
+        var node = new Pig2d.node();
+        node.set({model : model});
+
+        return node;
+    },
+
     ////////////////
     createSlotSprite : function(param) {
 
@@ -747,8 +924,8 @@ Pig2d.util = {
             spine_data : param.spine_data,
             slot_name  : param.slot_name,
             base_url   : param.base_url,
-            img_type   : param.img_type
-
+            img_type   : param.img_type,
+            loadComplete : param.loadComplete
         });
 
         //console.log(ani_obj);
@@ -764,7 +941,6 @@ Pig2d.util = {
 
         return node;
     },
-
 
     ////////////////
     createSprite : function(param) {
@@ -790,7 +966,6 @@ Pig2d.util = {
                     }
                 )}
         );
-        //
 
         return node;
 
@@ -806,7 +981,26 @@ Pig2d.util = {
             }
         );
 
-        node.get('model').setTexture(param);
+        console.log('create img');
+
+        if(param.center) {
+
+            var element = document.createElement('div');
+
+            element.style.backgroundImage = 'url('+ param.texture +')';
+            element.style.width = param.texture_size.width + 'px';
+            element.style.height = param.texture_size.height + 'px';
+
+            var cssval = 'translate('+ -param.center.x +'px,' + -param.center.y + 'px)'
+            element.style.WebkitTransform = cssval ;
+
+            node.get('model').get('element').appendChild(element);
+
+        }
+        else {
+            node.get('model').setTexture(param);
+        }
+
 
         return node;
 
@@ -881,10 +1075,13 @@ Pig2d.util = {
             callbackControl(movementX,movementY);
         }
 
-    },// end of setup_pig2dTestController
+    }// end of setup_pig2dTestController
+    //,setup_pig2dMoveController : function(listener_element,node) {
+
+    //},
 
 //////////////////////
-    spine : {
+    ,spine : {
         /*
 
          반환 형식
@@ -895,23 +1092,57 @@ Pig2d.util = {
          */
         extractAnimation : function (param) {
 
+            //default 를 키워드로 인식하는 번역기가 종종 있음
             var imagelist = param.spine_data.skins.default[param.slot_name];
 
             var result_obj = {
                 img_list : {}
             };
 
+
+            var imagelist_count = 0;
+            for(var key in imagelist ) {
+                imagelist_count++;
+            }
+
+            var counter = 0;
             for(var key in imagelist ) {
 
                 //이미지 객체 만들기
                 var imgobj = new Image();
+
+                imgobj.onload = function() {
+
+                    counter++;
+                    //console.log(imagelist);
+
+                    if(counter == imagelist_count) {
+                        if(param.loadComplete) {
+                            param.loadComplete(result_obj);
+                        }
+                    }
+                    else {
+                        if(param.loadProgress) {
+                            var evt = {
+                                img : imgobj,
+                                count : counter,
+                                total_count : imagelist_count
+                            }
+                            param.loadProgress(evt);
+                        }
+                    }
+                };
+
                 imgobj.src = param.base_url + '/' + key + '.' + param.img_type;
                 imgobj.style.position = 'absolute';
 
-                //imgobj.style.border = '1px solid'
+                //console.log(imagelist[key].x);
 
-                var dx = imagelist[key].x - (imagelist[key].width/2);
-                var dy = -((imagelist[key].height/2) + imagelist[key].y  );
+                var cx = imagelist[key].x || 0;
+                var cy = imagelist[key].y || 0;
+
+                var dx = cx - (imagelist[key].width/2);
+                var dy = -((imagelist[key].height/2) + cy );
 
                 var cssstr =  'translate('+ dx  + 'px,'+ dy +'px)';
 

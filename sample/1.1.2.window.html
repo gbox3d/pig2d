@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title> simple sample </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../libs/jquery-2.0.3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../libs/backbone/underscore.js"></script>
+    <!--<script src="../libs/backbone/json2.js"></script>-->
+    <script src="../libs/backbone/backbone.js"></script>
+
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <script src="../libs/gl-matrix-min.js"></script>
+
+    <script src="../libs/pig2d/js/core.js"></script>
+    <script src="../libs/pig2d/js/node2d.js"></script>
+    <!--<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/pig2d/js/node2d.js"></script>-->
+
+</head>
+
+<body>
+
+<div style="width: 320px; margin: auto;">
+
+    <p id='text-framerate-info'>frame rate</p>
+
+    <div id='sprite_window' style="
+    position: relative;
+    height :240px; /* 높이를 명시해주어야 영역이 잡혀 유아이가 밑으로 내려감.*/
+    margin-top: 3px;
+    background-color: #bf62ff/*배경색을 정해준다.*/
+    ">
+
+        <svg class='helper-grid' style="position: absolute;height :240px;border: 1px solid;" >
+
+            <line x1="0" y1="120" x2="320" y2="120" style="stroke:#000000;"/>
+            <line x1="160" y1="0" x2="160" y2="240" style="stroke:#000000;"/>
+
+        </svg>
+
+    </div>
+
+    <div id="ui-pannel" style="height: 120px;background-color: #dcdcdc;">
+        <div class='fire1' style="margin-top :30px; margin-left: 30px; display: inline-block; width: 60px;height: 60px; background-color: #ff0000"></div>
+        <div class='fire2' style="margin-left: 30px;display: inline-block;width: 60px;height: 60px; background-color: #00ff00"></div>
+        <div class='fire3' style="margin-left: 30px;display: inline-block;width: 60px;height: 60px; background-color: #0000ff"></div>
+    </div>
+
+</div>
+
+
+<script>
+
+    //씬메니져 생성하기
+    var Smgr = new Pig2d.SceneManager({
+        container : document.querySelector('#sprite_window')
+        ,window_size : { //클리핑 범위 지정
+            width : 320,
+            height: 240
+        }
+    });
+
+    //씬노드 만들기
+    var node = Smgr.addImageNode({
+        src : '../res/atat/atat-body.png',
+        onload : function(node) {
+            console.log(node.get('model').get('imgObj').src + ' loaded ');
+        }
+    });
+
+    node.get('model').setPosition(160,120);
+
+    //컨트롤러 설정
+    Pig2d.util.setup_pig2dTestController(
+            document, //이벤트를 받을 대상 (여기서는 화면 전체임)
+            node//조종할 대상이 되는 오브잭트
+    );
+
+    //타이머 설정 및 퍼포먼트 테스트용 정보
+    var mytimer = new gbox3d.core.Timer();
+    var framerate_info = document.querySelector("#text-framerate-info");
+    var frame_total = 0;
+    var loop_count = 0;
+
+    //게임 루프
+    requestAnimationFrame(
+            function loop() {
+
+                var deltaTime = mytimer.getDeltaTime();
+                frame_total += Math.round(1.0 / deltaTime);
+
+                loop_count++;
+
+                framerate_info.innerText = Math.round(frame_total / loop_count);
+
+                //씬메니져 업데이트
+                //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+                Smgr.updateAll();
+
+                requestAnimationFrame(loop);
+
+            }
+
+    );
+
+</script>
+
+
+
+</body>
+</html>
