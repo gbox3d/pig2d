@@ -18,8 +18,8 @@ node , model , scenemanager
 
 <script src="../libs/jquery-2.0.3.min.js"></script>
 
-<script src="../libs/backbone/underscore.js"></script>
-<script src="../libs/backbone/backbone.js"></script>
+<script src="../libs/backbone/underscore-min.js"></script>
+<script src="../libs/backbone/backbone-min.js"></script>
 
 <script src="../libs/gl-matrix-min.js"></script>
 <script src="../libs/pig2d/js/core.js"></script>
@@ -36,8 +36,8 @@ CDN 버전
 <script src="http://code.jquery.com/jquery-latest.js"></script>
 
     
-<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/backbone/underscore.js"></script>
-<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/backbone/backbone.js"></script>
+<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/backbone/underscore-min.js"></script>
+<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/backbone/backbone-min.js"></script>
 
 
     
@@ -71,8 +71,8 @@ https://rawgithub.com/gbox3d/  대신에  http://gbox3d.github.io/ 로 해주셔
     <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
     <script src="../libs/jquery-2.0.3.min.js"></script>
 
-    <script src="../libs/backbone/underscore.js"></script>
-    <script src="../libs/backbone/backbone.js"></script>
+    <script src="../libs/backbone/underscore-min.js"></script>
+    <script src="../libs/backbone/backbone-min.js"></script>
 
 
     <script src="../libs/gl-matrix-min.js"></script>
@@ -98,15 +98,16 @@ https://rawgithub.com/gbox3d/  대신에  http://gbox3d.github.io/ 로 해주셔
     });
 
     //스프라이트 노드 만들어서 씬노드메니져에 추가하기
+
     var node = Smgr.addImageNode({
-        img_info : {
-            texture : '../res/atat/atat-body.png',
-            texture_size : {
-                width :298,
-                height : 191
-            }
+        src : '../res/atat/atat-body.png',
+        onload : function(node) {
+            console.log(node.get('model').get('imgObj').src + ' loaded ');
         }
     });
+
+    node.get('model').setPosition(300,200);
+
 
     //컨트롤러 설정
     Pig2d.util.setup_pig2dTestController(
