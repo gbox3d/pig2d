@@ -3,39 +3,9 @@
  * User: gbox3d
  * Date: 13. 3. 30.
  * Time: 오후 3:35
- *
+ * version : 0.8
  * it is parts of pig2d engine
  * this engine is base on html5 css3
- *
- *
- * changes..
-
- -13.9.5
- backbone 1.0.0 버전으로 업글
-
- -13.9.2
- 씬 메니져 클리핑 영역 지정추가
-
- -13.8.27
- node.removeChild 기능추가
- node.show
-
-
- * -13. 8.14
- * SlotSpriteModel
- * animation
- * cloning
- *
- * -13.6.7
- * 미러링 기능추가 (flipX,flipY 속성)
- *
- *
- *
- * todos..
- *
- * - 씬 오더링 문재 해결
- *
- *
  */
 
 
@@ -68,9 +38,14 @@ Pig2d.model = Backbone.Model.extend({
 
         this.attributes.element = element;
 
+        this.attributes.update_signal = 'none';
+
         this.attributes.translation = new gbox3d.core.Vect2d(0,0);
         this.attributes.scale = new gbox3d.core.Vect2d(1,1);
-        this.attributes.matrix = mat2d.create();
+
+        //this.attributes.matrix = mat2d.create();
+        //this.attributes.matrix = new WebKitCSSMatrix();
+
         this.attributes.flipX = false;
         this.attributes.flipY = false;
 
@@ -84,20 +59,6 @@ Pig2d.model = Backbone.Model.extend({
     defaults: {
         rotation : 0
     },
-
-    /*
-    getTransform : function() {
-
-        return this.attributes.matrix;
-
-    },
-    setTransform : function(mat) {
-
-        this.attributes.matrix.clone(mat);
-
-    },
-    */
-
     getPosition : function() {
         return this.attributes.translation;
     },
@@ -159,15 +120,49 @@ Pig2d.model = Backbone.Model.extend({
 
     }(),
 
-    ////////////// animator
+    /////////////////////
+    ////행렬관련
+    //////////////////
+    getCssMatrix : function() {
 
+        var el = this.get('element');
+        var computedStyle = window.getComputedStyle(el);
+        var trans = computedStyle.getPropertyValue('-webkit-transform');
+
+        var cssmat = new WebKitCSSMatrix(trans);
+
+        return cssmat;
+
+    },
+    //주어진 행렬을 분해하여 노드변환값에 역적용하기
+    decomposeCssMatrix : function(cssmat) {
+        //var cssmat = this.getCssMatrix();
+
+        //이동변환 얻기
+        this.attributes.translation.X = cssmat.e;
+        this.attributes.translation.Y = cssmat.f;
+
+        //스케일 얻기
+        var scalex = Math.sqrt(cssmat.a*cssmat.a + cssmat.b*cssmat.b);
+        var scaley = Math.sqrt(cssmat.c*cssmat.c + cssmat.d*cssmat.d);
+
+        this.attributes.scale.X = scalex;
+        this.attributes.scale.Y = scaley;
+
+        //회전 얻기
+        var angle = Math.round(Math.atan2(cssmat.b/scalex, cssmat.a/scalex) * (180/Math.PI));
+        this.attributes.rotation = angle;
+
+    },
+
+    ////////////// animator
     setupTransition : function(param) {
         var element = this.get('element');
 
         element.style.WebkitTransition = '';
         this.attributes.TransitionEndCallBack = param.TransitionEndCallBack;
 
-        element.addEventListener('webkitTransitionEnd',function() {
+        this.attributes._TransitionEndCallBack = function() {
 
             element.style.WebkitTransition = '';
             this.attributes.cssupdate = true;
@@ -178,7 +173,11 @@ Pig2d.model = Backbone.Model.extend({
 
             }
 
-        }.bind(this),false);
+        }.bind(this);
+
+
+
+        element.addEventListener('webkitTransitionEnd',this.attributes._TransitionEndCallBack,false);
 
 
 
@@ -186,6 +185,7 @@ Pig2d.model = Backbone.Model.extend({
 //        if(param.timing_function != undefined) {
 //            element.style.webkitTransitionTimingFunction = 'linear';
 //        }
+        return this;
 
     },
     transition : function(param) {
@@ -238,112 +238,108 @@ Pig2d.model = Backbone.Model.extend({
         }
 
     },
+    stopTransition : function(param) {
+
+        this.attributes.update_signal = 'stop_transition';
+
+        return this;
+
+    },
     clearTransition : function() {
 
         var el = this.get('element');
+        el.removeEventListener('webkitTransitionEnd',this.attributes._TransitionEndCallBack);
+        this.attributes.update_signal = 'stop_transition';
 
-        el.removeEventListener('webkitTransitionEnd');
-        el.style.WebkitTransition = '';
-        this.attributes.cssupdate = true;
-
-
-                             /*
-        var mat = el.style.WebkitTransform.slice(7,el.style.WebkitTransform.length - 1);
-        console.log(mat);
-        mat = mat.split(',');
-        this.setPosition(mat[4],mat[5]);
-        */
 
     },
-    ///////////////
-    setTexture : function(param) {
+    ////////////////////
 
-        var el = this.get('element');
-
-        if(param.texture_size != undefined) {
-            $(el).css('width',  param.texture_size.width + 'px' );
-            $(el).css('height',  param.texture_size.height + 'px' );
-        }
-        if(param.texture != undefined) {
-
-            el.style.backgroundImage = 'url('+ param.texture +')';
-//            $(el).css('background-image','url('+ param.texture +')');
-        }
-
-        return this;
-
-    },
     updateCSS : function() {
 
-        if(this.attributes.cssupdate == false) return;
-
-        var trans = this.attributes.translation;
-        var rot = this.attributes.rotation;
-        var scale = this.attributes.scale;
-
-        mat2d.setRotation(this.attributes.matrix,gbox3d.core.degToRad(rot));
-
-        mat2d.setTranslation(this.attributes.matrix,
-            this.attributes.offset.x + trans.X,
-            this.attributes.offset.y + trans.Y);
-
-        mat2d.setScale(this.attributes.matrix,scale.X,scale.Y);
-
-        var mat = this.attributes.matrix;
-
-        if(this.attributes.flipX) {
-            mat[0] *= -1;
-            mat[2] *= -1;
-        }
-
-        if(this.attributes.flipY) {
-            mat[3] *= -1;
-            mat[1] *= -1;
-        }
-
-        var css_val =  'matrix('
-            + mat[0] + ','
-            + mat[1] + ','
-            + mat[2] + ','
-            + mat[3] + ','
-            + mat[4] + ','
-            + mat[5] + ')';
+        //if(this.attributes.cssupdate == false) return;
 
         var el = this.get('element');
 
-        el.style.WebkitTransform = css_val;
-        el.style.MozTransform = css_val;
-        el.style.oTransform = css_val;
-        el.style.transform = css_val;
+        switch (this.attributes.update_signal) {
 
-        //트랜지션 상태이면 css를 더이상 업데이트 못하게 한다
-        if(el.style.WebkitTransition !== '') {
-            this.attributes.cssupdate = false;
+            case 'none':
+                (function() {
+                    //오브잭트변환값을 앨리먼트쪽으로 갱신해주기
+                    if(this.attributes.cssupdate == true) {
+
+                        var trans = this.attributes.translation;
+                        var rot = this.attributes.rotation;
+                        var scalex = this.attributes.scale.X;
+                        var scaley = this.attributes.scale.Y;
+
+                        //반전 적용
+                        if(this.attributes.flipX) {
+                            scaley = -scaley;
+                        }
+                        if(this.attributes.flipY) {
+                            scalex = -scalex;
+                        }
+
+                        var css_val = 'translate(' + trans.X + 'px,' + trans.Y +'px) ' +
+                            'rotate(' + rot + 'deg) ' +
+                            'scale(' + scalex + ',' + scaley + ')';
+
+                        //브라우져 호환성을 위한 코드
+                        el.style.WebkitTransform = css_val;
+                        el.style.MozTransform = css_val;
+                        el.style.oTransform = css_val;
+                        el.style.transform = css_val;
+
+                        //트랜지션 상태이면 css를 더이상 업데이트 못하게 한다
+                        if(el.style.WebkitTransition !== '') {
+                            this.attributes.cssupdate = false;
+                        }
+
+                    }
+                    else {
+
+                    }
+
+                }).bind(this)();
+                break;
+            case 'stop_transition':
+                (function() {
+
+                    //행렬분해후 적용
+                    this.decomposeCssMatrix(this.getCssMatrix());
+
+
+                    el.style.WebkitTransition = '';
+                    this.attributes.update_signal = 'none';
+                    this.attributes.cssupdate = true;
+
+                    this.updateCSS();
+
+                }).bind(this)();
+                break;
+
         }
 
-
         return this;
-        //브라우져 호환성을 위한 코드
+
 
     },
+
+    //////////////////////////
     //노드에서 완전히 제거할때 사용됨
     destroy : function() {
 
         var el = this.get('element');
-
-        el.removeEventListener('webkitTransitionEnd');
-
+        //el.removeEventListener('webkitTransitionEnd');
+        this.clearTransition();
         el.parentNode.removeChild(el);
 
     },
     clone : function() {
         var model  = Backbone.Model.prototype.clone.call(this);
-
-        console.log(model);
-
+//        console.log(model);
         model.set("element",this.get('element').cloneNode(true));
-
-
         return model;
 
     }
@@ -355,7 +351,11 @@ Pig2d.model = Backbone.Model.extend({
 Pig2d.SpriteModel = Pig2d.model.extend({
     initialize: function(param) {
         Pig2d.model.prototype.initialize.call(this);
+
         this.attributes.currentFrame = 0;
+
+        //애니메이션 타이머 핸들
+        this.attributes.animationHID = null;
 
         var sheet = document.createElement('canvas');
 
@@ -365,20 +365,6 @@ Pig2d.SpriteModel = Pig2d.model.extend({
         this.get('element').appendChild(sheet);
         this.set('sheet',sheet);
 
-        /*
-        var frame = this.attributes.data.frames[0];
-        var sheet = frame.sheets[0];
-
-        var sheet_el = document.createElement('div');
-
-        //텍스춰가 바뀌려면 먼저 공백 문자열을 넣어 줘야한다.
-        //backgroundImage 가 공백이 아니면 텍스춰를 바꾸지 않는다.
-        sheet_el.style.backgroundImage = '';
-        sheet_el.style.backgroundImage = 'url('+ sheet.texture +')';
-        element.appendChild(sheet_el);
-        */
-
-//        this.set('currentFrame',0);
         this.setFrame(0);
     },
     clone : function() {
@@ -391,37 +377,6 @@ Pig2d.SpriteModel = Pig2d.model.extend({
 
     },
     updateCSS : function () {
-
-        /*
-        var frame = this.attributes.data.frames[this.attributes.currentFrame];
-
-        if(frame.sheets.length <= 0)
-            return;
-
-        var sheet = frame.sheets[0];
-
-        if(sheet.centerOffset != undefined) {
-            this.attributes.offset.x = sheet.centerOffset.x;
-            this.attributes.offset.y = sheet.centerOffset.y;
-        }
-        else {
-            this.attributes.offset.x = (sheet.width/2);
-            this.attributes.offset.y = -(sheet.height/2);
-
-        }
-
-        var el_sheet_root = this.get('element').querySelector('.pig2d-sheet');
-
-        for(var i=0;i< el_sheet_root.childNodes.length;i++ ) {
-            var sheet_el = el_sheet_root.childNodes[i];
-
-            sheet_el.style.backgroundPosition = sheet.bp_x+"px " + sheet.bp_y +"px";
-            sheet_el.style.width = sheet.width + 'px';
-            sheet_el.style.height = sheet.height + 'px';
-
-        }
-        */
-
 
         return Pig2d.model.prototype.updateCSS.call(this);
 
@@ -461,6 +416,13 @@ Pig2d.SpriteModel = Pig2d.model.extend({
 
 
     },
+    stop_animate : function() {
+
+        if(this.attributes.animationHID != null) {
+            clearTimeout(this.attributes.animationHID);
+            this.attributes.animationHID = null;
+        }
+    },
     animate : function(param) {
 
         param = param || {};
@@ -469,40 +431,66 @@ Pig2d.SpriteModel = Pig2d.model.extend({
 
         var frameindex =  this.get('currentFrame');
 
-        //var frameindex = startFrame;
-
         var data = this.get('data');
 
 
         return (function() {
 
-            if(frameindex >= data.frames.length-1) {
+            var endFrame = param.endFrame || data.frames.length - 1;
+
+
+
+            if(frameindex >= endFrame) {//마지막 프레임이면
+
+                //console.log(frameindex +'/' +  param.endFrame );
+                console.log(endFrame);
+
                 param.endCallBack ? param.endCallBack(this) : (function(){})();
 
                 if(loop == true) {
+
+                    if(param.startFrame != undefined ) {
+                        if(!param.startFrame)
+                        {
+                            frameindex = 0;
+                        }
+                        else {
+                            frameindex = param.startFrame - 1;
+                        }
+
+                    }else {
+                        frameindex = 0;
+                    }
+                    this.setFrame(frameindex);
                     var delay = data.frames[frameindex].delay;
 
-                    //param.startFrame = startFrame;
-                    //frameindex = 0;
-                    if(param.startFrame != undefined) {
-                        this.set('currentFrame',param.startFrame - 1);
-                    }
-
-                    setTimeout(this.animate(param).bind(this),1000);
+                    this.attributes.animationHID = setTimeout(this.animate(param).bind(this),delay);
                 }
 
             }
             else {
-                //this.set('currentFrame', ++frameindex);
+
                 ++frameindex;
+
                 this.setFrame(frameindex);
                 var delay = data.frames[frameindex].delay;
-                setTimeout(this.animate(param).bind(this),delay);
+                this.attributes.animationHID =setTimeout(this.animate(param).bind(this),delay);
             }
-            //this.updateCSS();
+
         }).bind(this);
 
+    },
+
+    /////////////////////////
+
+    destroy : function() {
+
+        this.stop_animate();
+
+        //슈퍼 클래싱
+        Pig2d.model.prototype.destroy.call(this);
     }
+
 
 });
 //end of sprite model
@@ -904,8 +892,11 @@ Pig2d.util = {
         canvas.height	= param.height || param.imgObj.height;
 
         canvas.style.position = 'absolute';
-        canvas.style.left =  basex + 'px';
-        canvas.style.top = basey + 'px';
+        //canvas.style.left =  basex + 'px';
+        //canvas.style.top = basey + 'px';
+
+        canvas.style.WebkitTransform = 'translate(' + basex +'px,' + basey + 'px)';
+
         element.appendChild(canvas);
 
         var ctx		= canvas.getContext('2d');

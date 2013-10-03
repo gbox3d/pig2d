@@ -533,11 +533,104 @@ gbox3d.core.Box2d.prototype.getCollisionArea = function (node) {
 //        bottomright: new gbox3d.core.Vect2d(sx+width,sy+height)
 //
 //    });
-}
+};
+
 
 
 ///////////////matrix2d
+///
+/*
+ var computedStyle = window.getComputedStyle(element);
+ var css_transform = computedStyle.getPropertyValue('-webkit-transform');
+ */
+gbox3d.core.matrix2d = function(css_transform) {
+    if(css_transform) {
+        this.matrix = new WebKitCSSMatrix(css_transform);
+    }
+    else {
+        this.matrix = new WebKitCSSMatrix();
+    }
+
+};
+
+gbox3d.core.matrix2d.prototype.translate = function(x,y) {
+
+    this.matrix = this.matrix.translate(x,y);
+};
+gbox3d.core.matrix2d.prototype.rotate = function(angle) {
+    this.matrix = this.matrix.rotate(angle);
+};
+gbox3d.core.matrix2d.prototype.scale = function(x,y) {
+    this.matrix = this.matrix.scale(x,y);
+};
+
+//행렬 분해
+gbox3d.core.matrix2d.prototype.decompose = function() {
+
+    var cssmat = this.matrix;
+    //이동변환 얻기
+    var x = cssmat.e;
+    var y = cssmat.f;
+
+    //스케일 얻기
+    var scalex = Math.sqrt(cssmat.a*cssmat.a + cssmat.b*cssmat.b);
+    var scaley = Math.sqrt(cssmat.c*cssmat.c + cssmat.d*cssmat.d);
+
+    //회전 얻기
+    var angle = Math.round(Math.atan2(cssmat.b/scalex, cssmat.a/scalex) * (180/Math.PI));
+
+    return {
+        x: x,
+        y: y,
+        scalex : scalex,
+        scaley : scaley,
+        angle:angle
+    }
+}
+
+gbox3d.core.matrix2d.prototype.compose = function(param) {
+
+    if(param.translation) {
+        this.matrix = this.matrix.translate(param.translation.x,param.translation.y);
+    }
+
+    if(param.angle)
+        this.matrix = this.matrix.rotate(param.angle);
+
+    if(param.scale)
+        this.matrix = this.matrix.scale(param.scale.x,param.scale.y);
+
+
+}
+
+gbox3d.core.matrix2d.prototype.setTranslation = function(x,y) {
+
+    this.matrix = this.matrix = new WebKitCSSMatrix();
+    this.matrix.e = x;
+    this.matrix.f = y;
+};
+
+gbox3d.core.matrix2d.prototype.setRotation = function(angle) {
+    //단위행렬로 재초기화
+    this.matrix = this.matrix = new WebKitCSSMatrix();
+    this.matrix = this.matrix.rotate(angle);
+};
+
+gbox3d.core.matrix2d.prototype.setScale = function(x,y) {
+    this.matrix = this.matrix = new WebKitCSSMatrix();
+    this.matrix = this.matrix.scale(x,y);
+
+};
+
+gbox3d.core.matrix2d.prototype.toString = function() {
+
+    return this.matrix.toString();
+};
+
+
+
 //아래 메트릭스를 위해서는 gl-matrix 가 필요함
+/*
 mat2d.setRotation = function(a,rad) {
 
     var st = gbox3d.core.epsilon(Math.sin(rad)),
@@ -574,6 +667,7 @@ mat2d.CSSstr = function (a) {
         + gbox3d.core.epsilon(a[4]) + ', '
         + gbox3d.core.epsilon(a[5]) + ')';
 };
+*/
 
 /////////////////////////
 //애니미에션 프레임 초기화
