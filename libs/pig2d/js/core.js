@@ -402,8 +402,15 @@ gbox3d.core.Vect2d.prototype.addToThis = function(a) {
 	this.X += a.X;
 	this.Y += a.Y;
 }
-gbox3d.core.Vect2d.prototype.sub = function(a) {
-	return new gbox3d.core.Vect2d(this.X - a.X, this.Y - a.Y);
+gbox3d.core.Vect2d.prototype.sub = function(a,b) {
+
+    if(!b) {
+        return new gbox3d.core.Vect2d(this.X - a.X, this.Y - a.Y);
+    }
+    else
+        return new gbox3d.core.Vect2d(this.X - a, this.Y - b);
+
+
 };
 gbox3d.core.Vect2d.prototype.subToThis = function(a) {
 	this.X -= a.X;
