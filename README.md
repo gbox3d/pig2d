@@ -21,7 +21,6 @@ node , model , scenemanager
 <script src="../libs/backbone/underscore-min.js"></script>
 <script src="../libs/backbone/backbone-min.js"></script>
 
-<script src="../libs/gl-matrix-min.js"></script>
 <script src="../libs/pig2d/js/core.js"></script>
 <script src="../libs/pig2d/js/node2d.js"></script>
 
@@ -32,16 +31,12 @@ CDN 버전
 ```html
 <link href="https://rawgithub.com/gbox3d/pig2d/master/libs/pig2d/css/core.css" rel="stylesheet"></link>
 
-    
 <script src="http://code.jquery.com/jquery-latest.js"></script>
 
     
 <script src="https://rawgithub.com/gbox3d/pig2d/master/libs/backbone/underscore-min.js"></script>
 <script src="https://rawgithub.com/gbox3d/pig2d/master/libs/backbone/backbone-min.js"></script>
 
-
-    
-<script src="https://rawgithub.com/gbox3d/pig2d/libs/gl-matrix-min.js"></script>
 <script src="https://rawgithub.com/gbox3d/pig2d/master/libs/pig2d/js/core.js"></script>
 <script src="https://rawgithub.com/gbox3d/pig2d/master/libs/pig2d/js/node2d.js"></script>
 
@@ -74,8 +69,6 @@ https://rawgithub.com/gbox3d/  대신에  http://gbox3d.github.io/ 로 해주셔
     <script src="../libs/backbone/underscore-min.js"></script>
     <script src="../libs/backbone/backbone-min.js"></script>
 
-
-    <script src="../libs/gl-matrix-min.js"></script>
 
 <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
     
