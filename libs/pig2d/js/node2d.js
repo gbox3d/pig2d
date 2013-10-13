@@ -663,6 +663,7 @@ Pig2d.SceneManager = Backbone.Model.extend({
 
         this.attributes.container.appendChild(rootElement);
         this.attributes.rootNode = rootNode;
+
     },
     updateAll : function() {
 

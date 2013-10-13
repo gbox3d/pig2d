@@ -49,6 +49,15 @@ gbox3d.core.clamp = function(c, a, b) {
 	}
 	return c
 };
+
+//일정 범위의 랜덤 값 만들기
+gbox3d.core.randomIntFromTo = function (from, to){
+    return Math.floor(Math.random() * (to - from + 1) + from);
+}
+gbox3d.core.randomFloatFromTo = function(from, to){
+    return Math.random() * (to - from + 1) + from;
+}
+
 gbox3d.core.fract = function(a) {
 	return a - Math.floor(a)
 };
@@ -176,6 +185,7 @@ gbox3d.core.Vect3d = function(a, c, b) {
 		this.Z = b
 	}
 };
+
 gbox3d.core.Vect3d.prototype.X = 0;
 gbox3d.core.Vect3d.prototype.Y = 0;
 gbox3d.core.Vect3d.prototype.Z = 0;
@@ -388,6 +398,10 @@ gbox3d.core.Vect2d.prototype.rotate = function(angle, center) {
 	this.X += center.X;
 	this.Y += center.Y;
 }
+gbox3d.core.Vect2d.prototype.translate = function( param ) {
+    this.X += param.X;
+    this.Y += param.Y;
+}
 
 gbox3d.core.Vect2d.prototype.multiply = function(mult) {
 	this.X *= mult;
@@ -402,6 +416,9 @@ gbox3d.core.Vect2d.prototype.addToThis = function(a) {
 	this.X += a.X;
 	this.Y += a.Y;
 }
+
+
+
 gbox3d.core.Vect2d.prototype.sub = function(a,b) {
 
     if(!b) {
@@ -478,6 +495,90 @@ gbox3d.core.Vect2d.prototype.getDistanceTo = function(b) {
 
     return Math.sqrt(a * a + d * d);
 }
+
+gbox3d.core.Vect2d.prototype.formSVG = function(svgElement) {
+
+    switch(svgElement.tagName)
+    {
+        case 'circle':
+        case 'ellipse':
+            this.X = parseInt(svgElement.getAttribute('cx'));
+            this.Y = parseInt(svgElement.getAttribute('cy'));
+            break;
+        case 'rect':
+            this.X = parseInt(svgElement.getAttribute('x'));
+            this.Y = parseInt(svgElement.getAttribute('y'));
+            break;
+    }
+}
+
+gbox3d.core.Vect2d.prototype.toSVG = function(svgElement) {
+
+    switch(svgElement.tagName)
+    {
+        case 'circle':
+        case 'ellipse':
+            svgElement.setAttribute('cx',this.X);
+            svgElement.setAttribute('cy',this.Y);
+            break;
+        case 'rect':
+            svgElement.setAttribute('x',this.X);
+            svgElement.setAttribute('y',this.Y);
+            break;
+    }
+}
+gbox3d.core.Vect2d.prototype.InPolygon = function(points) {
+    var length  = points.length;
+    var counter = 0;
+    var x_inter;
+
+    var p1 = points[0];
+
+    for ( var i = 1; i <= length; i++ ) {
+        var p2 = points[i%length];
+
+        if ( this.Y > Math.min(p1.Y, p2.Y)) {
+            if ( this.Y <= Math.max(p1.Y, p2.Y)) {
+                if ( this.X <= Math.max(p1.X, p2.X)) {
+                    if ( p1.Y != p2.y ) {
+
+                        x_inter = (this.Y - p1.Y) * (p2.X - p1.X) / (p2.Y - p1.Y) + p1.X;
+                        //console.log(x_inter);
+
+                        if ( p1.X == p2.X || this.X <= x_inter) {
+                            counter++;
+                        }
+                    }
+                }
+            }
+        }
+        p1 = p2;
+    }
+
+    /*
+    var p1 = this.handles[0].point;
+
+    for ( var i = 1; i <= length; i++ ) {
+        var p2 = this.handles[i%length].point;
+
+        if ( point.y > Math.min(p1.y, p2.y)) {
+            if ( point.y <= Math.max(p1.y, p2.y)) {
+                if ( point.x <= Math.max(p1.x, p2.x)) {
+                    if ( p1.y != p2.y ) {
+                        x_inter = (point.y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y) + p1.x;
+                        if ( p1.x == p2.x || point.x <= x_inter) {
+                            counter++;
+                        }
+                    }
+                }
+            }
+        }
+        p1 = p2;
+    }
+    */
+
+    return ( counter % 2 == 1 );
+};
 
 ///////////////////////////////////////////////////////////
 //box 2D
@@ -560,6 +661,14 @@ gbox3d.core.matrix2d = function(css_transform) {
 
 };
 
+gbox3d.core.matrix2d.prototype.setupFromElement = function(element)
+{
+    var computedStyle = window.getComputedStyle(element);
+    var css_transform = computedStyle.getPropertyValue('-webkit-transform');
+    this.matrix = new WebKitCSSMatrix(css_transform);
+
+}
+
 gbox3d.core.matrix2d.prototype.translate = function(x,y) {
 
     this.matrix = this.matrix.translate(x,y);
@@ -597,6 +706,8 @@ gbox3d.core.matrix2d.prototype.decompose = function() {
 
 gbox3d.core.matrix2d.prototype.compose = function(param) {
 
+    this.matrix = new WebKitCSSMatrix();
+
     if(param.translation) {
         this.matrix = this.matrix.translate(param.translation.x,param.translation.y);
     }
@@ -610,71 +721,33 @@ gbox3d.core.matrix2d.prototype.compose = function(param) {
 
 }
 
+
 gbox3d.core.matrix2d.prototype.setTranslation = function(x,y) {
 
-    this.matrix = this.matrix = new WebKitCSSMatrix();
+    //this.matrix = this.matrix = new WebKitCSSMatrix();
     this.matrix.e = x;
     this.matrix.f = y;
 };
 
+/*
 gbox3d.core.matrix2d.prototype.setRotation = function(angle) {
     //단위행렬로 재초기화
-    this.matrix = this.matrix = new WebKitCSSMatrix();
+    //this.matrix = this.matrix = new WebKitCSSMatrix();
     this.matrix = this.matrix.rotate(angle);
 };
 
 gbox3d.core.matrix2d.prototype.setScale = function(x,y) {
-    this.matrix = this.matrix = new WebKitCSSMatrix();
+    //this.matrix = this.matrix = new WebKitCSSMatrix();
     this.matrix = this.matrix.scale(x,y);
 
 };
+*/
 
 gbox3d.core.matrix2d.prototype.toString = function() {
 
     return this.matrix.toString();
 };
 
-
-
-//아래 메트릭스를 위해서는 gl-matrix 가 필요함
-/*
-mat2d.setRotation = function(a,rad) {
-
-    var st = gbox3d.core.epsilon(Math.sin(rad)),
-        ct = gbox3d.core.epsilon(Math.cos(rad));
-
-    a[0] = ct;
-    a[1] = st;
-    a[2] = -st;
-    a[3] = ct;
-}
-
-
-mat2d.setTranslation = function(a,tx,ty) {
-
-    a[4] = tx;
-    a[5] = ty;
-}
-
-mat2d.setScale = function(a,sx,sy) {
-
-    a[0] *= sx;
-    a[1] *= sx;
-
-    a[2] *= sy;
-    a[3] *= sy;
-}
-
-mat2d.CSSstr = function (a) {
-    return 'matrix('
-        + gbox3d.core.epsilon(a[0]) + ', '
-        + gbox3d.core.epsilon(a[1]) + ', '
-        + gbox3d.core.epsilon(a[2]) + ', '
-        + gbox3d.core.epsilon(a[3]) + ', '
-        + gbox3d.core.epsilon(a[4]) + ', '
-        + gbox3d.core.epsilon(a[5]) + ')';
-};
-*/
 
 /////////////////////////
 //애니미에션 프레임 초기화
@@ -691,8 +764,36 @@ mat2d.CSSstr = function (a) {
 })();
 
 
-
+///////System 관련 모듈////
 /////////////////////////
+
+gbox3d.system = {
+
+    //코루틴 관리자.(지연 실행 관리자, 지연후 특정 타이밍 호출할필요가 있을때 사용한다.)
+    CoroutineManger : function(param) {
+        this.Callbacks = new Array();
+
+        this.Apply = function(deltatime) {
+
+            while(this.Callbacks.length > 0) {
+
+                var callback = this.Callbacks.pop();
+
+                callback({
+                    deltaTime : deltatime
+                });
+
+            }
+
+        }
+
+        this.yield = function(coroutin) {
+
+            this.Callbacks.push(coroutin);
+        }
+    }
+
+};
 
 
 
