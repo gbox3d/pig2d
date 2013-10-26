@@ -50,6 +50,7 @@ Pig2d.model = Backbone.Model.extend({
         this.attributes.flipY = false;
 
         this.attributes.cssupdate = true;
+        this.attributes.cancelTransition = false;
 
         this.attributes.offset = {
             x:0,
@@ -60,6 +61,13 @@ Pig2d.model = Backbone.Model.extend({
         rotation : 0
     },
     getPosition : function() {
+
+        //if(decompose == true) {
+            //행렬분해후 적용
+        //    this.decomposeCssMatrix(this.getCssMatrix());
+        //}
+
+
         return this.attributes.translation;
     },
     getRotation : function() {
@@ -154,6 +162,13 @@ Pig2d.model = Backbone.Model.extend({
         this.attributes.rotation = angle;
 
     },
+    getDecomposePosition : function() {
+
+        var cssmat = this.getCssMatrix();
+
+        return new gbox3d.core.Vect2d(cssmat.e,cssmat.f);
+
+    },
 
     ////////////// animator
     setupTransition : function(param) {
@@ -164,27 +179,29 @@ Pig2d.model = Backbone.Model.extend({
 
         this.attributes._TransitionEndCallBack = function() {
 
-            element.style.WebkitTransition = '';
-            this.attributes.cssupdate = true;
+            if(this.attributes.cancelTransition == true) {
 
-            if(this.attributes.TransitionEndCallBack != undefined) {
-
-                this.attributes.TransitionEndCallBack.apply(this);
-
+                this.attributes.cancelTransition = false;
             }
+            else {
+                this.attributes.cssupdate = true;
+                element.style.WebkitTransition = '';
+                if(this.attributes.TransitionEndCallBack != undefined) {
+
+                    this.attributes.TransitionEndCallBack.apply(this);
+
+                }
+            }
+
 
         }.bind(this);
 
-
-
         element.addEventListener('webkitTransitionEnd',this.attributes._TransitionEndCallBack,false);
-
-
-
 
 //        if(param.timing_function != undefined) {
 //            element.style.webkitTransitionTimingFunction = 'linear';
 //        }
+
         return this;
 
     },
@@ -241,6 +258,7 @@ Pig2d.model = Backbone.Model.extend({
     stopTransition : function(param) {
 
         this.attributes.update_signal = 'stop_transition';
+        this.attributes.cancelTransition = true;
 
         return this;
 
@@ -254,7 +272,6 @@ Pig2d.model = Backbone.Model.extend({
 
     },
     ////////////////////
-
     updateCSS : function() {
 
         //if(this.attributes.cssupdate == false) return;
@@ -298,6 +315,8 @@ Pig2d.model = Backbone.Model.extend({
 
                     }
                     else {
+                        //현재 트랜지션 상태이므로 트래지션 취소는 무효화 된다.
+                        this.attributes.cancelTransition = false;
 
                     }
 
@@ -366,6 +385,9 @@ Pig2d.SpriteModel = Pig2d.model.extend({
         this.set('sheet',sheet);
 
         this.setFrame(0);
+
+        this.attributes.currentTick = 0;
+
     },
     clone : function() {
 
@@ -376,7 +398,10 @@ Pig2d.SpriteModel = Pig2d.model.extend({
         return model;
 
     },
-    updateCSS : function () {
+    updateCSS : function (deltaTime) {
+
+        deltaTime = deltaTime || 0;
+        this.applyAnimation(deltaTime);
 
         return Pig2d.model.prototype.updateCSS.call(this);
 
@@ -386,24 +411,29 @@ Pig2d.SpriteModel = Pig2d.model.extend({
     //////////////////////////////////////////////
     setFrame : function(index)  {
         //프레임 노드 얻기
-        this.set('currentFrame',index);
 
-        var sheet = this.get('sheet');
-        var frame = this.attributes.data.frames[this.attributes.currentFrame];
-        var sheet_data = frame.sheets[0];
+        var imgObj = this.get('imgObj');
 
-        sheet.width = sheet_data.width;
-        sheet.height = sheet_data.height;
+        if(imgObj != undefined) {
+            this.set('currentFrame',index);
 
-        sheet.style.left =  sheet_data.centerOffset.x + 'px';
-        sheet.style.top = sheet_data.centerOffset.y + 'px';
+            var sheet = this.get('sheet');
+            var frame = this.attributes.data.frames[this.attributes.currentFrame];
+            var sheet_data = frame.sheets[0];
 
-        var ctx		= sheet.getContext('2d');
-        ctx.drawImage(
-            this.get('imgObj'),
-            -sheet_data.bp_x,-sheet_data.bp_y,sheet.width,sheet.height,
-            0,0,sheet.width,sheet.height
-        );
+            sheet.width = sheet_data.width;
+            sheet.height = sheet_data.height;
+
+            sheet.style.left =  sheet_data.centerOffset.x + 'px';
+            sheet.style.top = sheet_data.centerOffset.y + 'px';
+
+            var ctx		= sheet.getContext('2d');
+            ctx.drawImage(
+                this.get('imgObj'),
+                -sheet_data.bp_x,-sheet_data.bp_y,sheet.width,sheet.height,
+                0,0,sheet.width,sheet.height
+            );
+        }
 
         return this;
     },
@@ -433,17 +463,11 @@ Pig2d.SpriteModel = Pig2d.model.extend({
 
         var data = this.get('data');
 
-
         return (function() {
 
             var endFrame = param.endFrame || data.frames.length - 1;
 
-
-
             if(frameindex >= endFrame) {//마지막 프레임이면
-
-                //console.log(frameindex +'/' +  param.endFrame );
-                //console.log(endFrame);
 
                 param.endCallBack ? param.endCallBack(this) : (function(){})();
 
@@ -477,11 +501,81 @@ Pig2d.SpriteModel = Pig2d.model.extend({
                 this.attributes.animationHID =setTimeout(this.animate(param).bind(this),delay);
             }
 
+
         }).bind(this);
 
     },
 
-    /////////////////////////
+    /////////////////////////////////////////////
+    /////new animation system////////////////////
+    /////////////////////////////////////////////
+
+    setupAnimation : function(param) {
+
+        param = param ? param : {};
+
+        this.attributes.startFrame = param.startFrame ? param.startFrame : 0 ;
+        this.attributes.endFrame = param.endFrame ? param.endFrame : (this.get('data').frames.length-1);
+        this.attributes.isAnimationLoop = param.isAnimationLoop ? param.isAnimationLoop : true;
+        this.attributes.AnimationStatus = param.AnimationStatus ? param.AnimationStatus : 'play';
+
+        this.setFrame(this.attributes.startFrame);
+
+    },
+    applyAnimation : function(delataTick) {
+
+
+        //console.log(delataTick);
+
+        if(this.attributes.AnimationStatus == 'play') {
+            this.attributes.currentTick += delataTick;
+            var frameindex =  this.attributes.currentFrame;
+            var Ani_data = this.get('data');
+
+            var delay = Ani_data.frames[frameindex].delay / 1000;
+
+            //console.log(this.attributes.currentTick);
+
+            if(this.attributes.currentTick > delay) {
+                this.attributes.currentTick = 0;
+                ++frameindex;
+
+                //console.log(this.attributes.endFrame);
+
+                if(frameindex > this.attributes.endFrame) {//마지막 프레임이면
+
+                    if(this.attributes.isAnimationLoop) {
+                        frameindex = this.attributes.startFrame;
+                    }
+                    else {
+                        this.attributes.AnimationStatus = 'stop';
+                        frameindex = this.attributes.endFrame;
+                    }
+
+                    if(this.attributes.AnimationEndCallback != undefined) {
+
+                        this.attributes.AnimationEndCallback.bind(this)();
+
+                    }
+
+                }
+                else {
+
+                }
+
+                this.setFrame(frameindex);
+
+            }
+        }
+        else {
+
+        }
+
+    },
+    stopAnimation : function() {
+
+    },
+    ////////////////////////
 
     destroy : function() {
 
@@ -506,15 +600,23 @@ Pig2d.node = Backbone.Model.extend({
 //        _.bindAll(this,"update","clone");
 
     },
-    update: function(applyChild) {
+    traverse : function(callback,param) {
 
-        this.get('model').updateCSS();
+        callback.bind(this)(param);
+
+        for(var index = 0;index < this.attributes.chiledren.length;index++ ) {
+            this.attributes.chiledren[index].traverse(callback,param);
+        }
+
+    },
+    update: function(applyChild,deltaTime) {
+
+        this.get('model').updateCSS(deltaTime);
 
         if( applyChild == true) {
 
-//            for(var index in this.attributes.chiledren) {
             for(var index = 0;index < this.attributes.chiledren.length;index++ ) {
-                this.attributes.chiledren[index].update(applyChild);
+                this.attributes.chiledren[index].update(applyChild,deltaTime);
             }
         }
 
@@ -659,15 +761,25 @@ Pig2d.SceneManager = Backbone.Model.extend({
             rootElement.style.height = param.window_size.height + 'px' ;
         }
 
+        if(param.bkg_color != undefined) {
+
+            rootElement.style.backgroundColor = param.bkg_color;
+        }
+
 
 
         this.attributes.container.appendChild(rootElement);
         this.attributes.rootNode = rootNode;
 
     },
-    updateAll : function() {
+    getRootNode : function() {
+        return this.attributes.rootNode;
+    },
+    updateAll : function(deltaTime) {
 
-        this.attributes.rootNode.update(true);
+        deltaTime = deltaTime ? deltaTime : 0.01;
+
+        this.attributes.rootNode.update(true,deltaTime);
 
     },
     add : function(node,parent) {
@@ -775,13 +887,31 @@ Pig2d.util = {
 
         return node;
     },
-
-
     ////////////////
     createSprite : function(param) {
-        //노드생성
 
-        var  element = $('<div></div>');
+
+        var startFrame = param.startFrame || 0;
+        var endFrame = param.endFrame || (param.animation.frames.length-1);
+
+        //노드생성
+        var node = new Pig2d.node();
+        var model =  new Pig2d.SpriteModel( {
+                data : param.animation,
+                imgObj : param.texture
+            }
+        );
+        node.set(
+            { model : model }
+        );
+
+        node.get('model').setupAnimation({
+            startFrame:startFrame,
+            endFrame:endFrame
+        });
+
+
+        /*var  element = $('<div></div>');
 
         var node = new Pig2d.node(
             {
@@ -801,12 +931,12 @@ Pig2d.util = {
                     }
                 )}
         );
+        */
 
         return node;
 
     },
     //////////////////
-
     createImage : function(param) {
         //노드생성
 
@@ -841,6 +971,92 @@ Pig2d.util = {
 
     },
     //////////////////////////////
+    SetupAsset : function(param) {
+
+        var asset_path = param.asset_path;
+        var img_files = param.img_files;
+        var animation_files = param.animation_files;
+        var OnLoadComplete = param.OnLoadComplete;
+        var OnLoadProgress = param.OnLoadProgress;
+        var textures = {};
+        var animations = {};
+        var i=0;
+
+
+        function preLoadAnimation(evt) {
+
+            if(evt) {
+                console.log(evt);
+                animations[evt.name] = evt;
+            }
+
+            if(animation_files.length <= i) {
+
+                var result = {};
+                result.textures = textures;
+                result.animations = animations;
+                if(OnLoadComplete != undefined)
+                    OnLoadComplete(result);
+
+            }
+            else {
+                var url = asset_path + animation_files[i];
+                i++;
+                $.ajax({
+                    type : "GET",
+                    url : url,
+                    dataType : "json",
+                    success : preLoadAnimation
+                });
+            }
+
+        }
+
+
+        (function preLoadImg() {
+
+            var imgObj = new Image();
+            imgObj.onload = function() {
+
+                var evt = {};
+                textures[img_files[i]] = imgObj;
+
+                evt.percent = (i/img_files.length) * 100;
+                evt.currentIndex = i;
+
+                if(OnLoadProgress != undefined)
+                    OnLoadProgress(evt);
+
+                i++;
+
+                if(i < img_files.length) {
+                    preLoadImg(); //다음 이미지 로딩
+                }
+                else {
+
+                    if(animation_files) {
+                        i=0;
+                        preLoadAnimation();
+                    }
+                    else {
+                        var result = {};
+                        result.textures = textures;
+                        if(OnLoadComplete != undefined)
+                            OnLoadComplete(result);
+
+                    }
+
+
+                }
+
+            }
+
+            imgObj.src =  asset_path + img_files[i];
+
+
+        })();
+    },
+
     ///테스트용 컨트롤러
     setup_pig2dTestController : function (listener_element,node) {
         function callbackControl(movementX,movementY) {
@@ -911,6 +1127,8 @@ Pig2d.util = {
         }
 
     }// end of setup_pig2dTestController
+
+
 
 
 

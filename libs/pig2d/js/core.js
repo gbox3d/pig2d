@@ -796,6 +796,21 @@ gbox3d.system = {
 };
 
 
+///////helper  모듈////
+/////////////////////////
+gbox3d.helper = {
+
+    css : {
+        getElementWidth : function(element) {
+            return parseInt(element.style.width.slice(0,-2));
+        },
+        getElementHeight : function(element) {
+            return parseInt(element.style.height.slice(0,-2));
+        }
+    }
+}
+
+
 
 
 

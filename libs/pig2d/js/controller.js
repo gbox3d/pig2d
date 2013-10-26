@@ -146,6 +146,8 @@ Pig2d.util.controller = {
         var node = param.node;
         var speed = param.speed ? param.speed : 100;
 
+        //console.log(speed);
+
         if(param.setupCallBack) {
 
             param.setupCallBack();
@@ -175,7 +177,7 @@ Pig2d.util.controller = {
         function _callbackControl(posX,posY) {
 
             node.get('model').stopTransition();
-            node.update(true);
+            node.update(true,0);
 
             var element = node.get('model').get('element');
             var cur_position = node.get('model').getPosition();
@@ -184,8 +186,9 @@ Pig2d.util.controller = {
             var dist = vt.getDistance();
             vt.normalize();
 
-            var duration_time = dist/100; //1초에 100만큼 이동
+            var duration_time = dist/(this.getSpeed()); //1초에 speed 만큼 이동
 
+            //if(duration_time > 0) {
             var dest_position = new gbox3d.core.Vect2d(posX,posY);
 
             if(param.startCallBack != undefined) {
@@ -193,6 +196,7 @@ Pig2d.util.controller = {
                 param.startCallBack({
                     dest : dest_position,
                     dist : dist,
+                    duration_time : duration_time,
                     direction_vector : vt
                 });
 
@@ -202,6 +206,10 @@ Pig2d.util.controller = {
                 position : dest_position,
                 time : duration_time
             });
+
+            //}
+
+
         }
 
 
