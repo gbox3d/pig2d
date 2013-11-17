@@ -177,7 +177,7 @@ Pig2d.model = Backbone.Model.extend({
         element.style.WebkitTransition = '';
         this.attributes.TransitionEndCallBack = param.TransitionEndCallBack;
 
-        this.attributes._TransitionEndCallBack = function() {
+        this.attributes._TransitionEndCallBack = function(event) {
 
             if(this.attributes.cancelTransition == true) {
 
@@ -193,6 +193,9 @@ Pig2d.model = Backbone.Model.extend({
                 }
             }
 
+            //이밴트 전달 금지
+            event.cancelBubble = true;
+            event.stopPropagation();
 
         }.bind(this);
 
@@ -383,11 +386,19 @@ Pig2d.SpriteModel = Pig2d.model.extend({
 
         this.get('element').appendChild(sheet);
         this.set('sheet',sheet);
+        this.set('sheetCTX',sheet.getContext('2d'));
 
         this.setFrame(0);
 
         this.attributes.currentTick = 0;
 
+        this.attributes.scaler = 1;
+
+        if(this.attributes.data.canvas_size) {
+
+            sheet.width = this.attributes.data.canvas_size.width;
+            sheet.height = this.attributes.data.canvas_size.height;
+        }
     },
     clone : function() {
 
@@ -412,26 +423,39 @@ Pig2d.SpriteModel = Pig2d.model.extend({
     setFrame : function(index)  {
         //프레임 노드 얻기
 
-        var imgObj = this.get('imgObj');
+        var imgObj = this.attributes.imgObj;
+
 
         if(imgObj != undefined) {
             this.set('currentFrame',index);
 
-            var sheet = this.get('sheet');
+            var sheet = this.attributes.sheet;
+            var ctx	= this.attributes.sheetCTX;
             var frame = this.attributes.data.frames[this.attributes.currentFrame];
             var sheet_data = frame.sheets[0];
 
-            sheet.width = sheet_data.width;
-            sheet.height = sheet_data.height;
+            var scaler = this.attributes.scaler;
 
-            sheet.style.left =  sheet_data.centerOffset.x + 'px';
-            sheet.style.top = sheet_data.centerOffset.y + 'px';
+            if(this.attributes.data.canvas_size) {
 
-            var ctx		= sheet.getContext('2d');
+                ctx.clearRect(0,0,this.attributes.data.canvas_size.width,this.attributes.data.canvas_size.height);
+
+            }
+            else {
+                sheet.width = sheet_data.width;
+                sheet.height = sheet_data.height;
+            }
+
+
+            var offsetX = sheet_data.centerOffset.x;
+            var offsetY = sheet_data.centerOffset.y;
+
+            sheet.style.webkitTransform = "translate(" + offsetX + "px," + offsetY + "px)";
+
             ctx.drawImage(
                 this.get('imgObj'),
-                -sheet_data.bp_x,-sheet_data.bp_y,sheet.width,sheet.height,
-                0,0,sheet.width,sheet.height
+                -sheet_data.bp_x,-sheet_data.bp_y,sheet_data.width,sheet_data.height
+                ,0,0,sheet_data.width ,sheet_data.height
             );
         }
 
@@ -910,29 +934,6 @@ Pig2d.util = {
             endFrame:endFrame
         });
 
-
-        /*var  element = $('<div></div>');
-
-        var node = new Pig2d.node(
-            {
-                el : element// $('.pig2d-templet .pig2d-sprite-templ ').clone(),
-            }
-        );
-
-        node.set(
-            {
-                model : new Pig2d.SpriteModel( {
-                        data : param.SpriteData,
-                        editor_info : param.editor_info ? param.editor_info :  {
-                            width : 320,
-                            height : 240
-                        },
-                        node :node
-                    }
-                )}
-        );
-        */
-
         return node;
 
     },
@@ -983,11 +984,11 @@ Pig2d.util = {
         var i=0;
 
 
-        function preLoadAnimation(evt) {
+        function preLoadAnimation(filename,data) {
 
-            if(evt) {
-                console.log(evt);
-                animations[evt.name] = evt;
+            if(data) {
+                //console.log(filename);
+                animations[filename] = data;
             }
 
             if(animation_files.length <= i) {
@@ -1001,12 +1002,18 @@ Pig2d.util = {
             }
             else {
                 var url = asset_path + animation_files[i];
+                var file_name = animation_files[i];
                 i++;
                 $.ajax({
                     type : "GET",
                     url : url,
                     dataType : "json",
-                    success : preLoadAnimation
+                    success : preLoadAnimation.bind(this,file_name),
+                    error : function(evt,status,xhr) {
+
+                        console.log(status);
+
+                    }
                 });
             }
 
@@ -1056,6 +1063,7 @@ Pig2d.util = {
 
         })();
     },
+
 
     ///테스트용 컨트롤러
     setup_pig2dTestController : function (listener_element,node) {

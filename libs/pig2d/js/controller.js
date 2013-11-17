@@ -138,6 +138,7 @@ Pig2d.util.controller = {
         }
 
     },
+    //end of joystick
 
     //transition 이용한 컨트롤러
     MouseSpot : function (param) {
@@ -173,23 +174,38 @@ Pig2d.util.controller = {
             return speed;
         }
 
+        var basePos = new gbox3d.core.Vect2d(0,0);
+
+        this.setBasePos = function(x,y) {
+
+            basePos.set(x,y);
+
+        }
+
 
         function _callbackControl(posX,posY) {
 
+
+            //일단 트랜지션을 종료하고 이동중간 위치에 멈추도록함
             node.get('model').stopTransition();
-            node.update(true,0);
+            node.update(true,0); //정확한 위치를 잡아내기위해서 업데이트를 해줌
+
+            var new_pos = new gbox3d.core.Vect2d(posX +basePos.X  ,posY + basePos.Y);
 
             var element = node.get('model').get('element');
             var cur_position = node.get('model').getPosition();
-            var vt = new gbox3d.core.Vect2d(posX,posY);
+            var vt = new_pos.clone();
             vt.subToThis(cur_position);
             var dist = vt.getDistance();
             vt.normalize();
 
             var duration_time = dist/(this.getSpeed()); //1초에 speed 만큼 이동
 
+            //console.log(cur_position);
+            //console.log(new_pos);
             //if(duration_time > 0) {
-            var dest_position = new gbox3d.core.Vect2d(posX,posY);
+
+            var dest_position = new_pos.clone();
 
             if(param.startCallBack != undefined) {
 
@@ -199,16 +215,17 @@ Pig2d.util.controller = {
                     duration_time : duration_time,
                     direction_vector : vt
                 });
-
             }
 
+
+            //여기서 트랜지션을 하고 다음턴에 업데이트 하면서 실제 트랜스폼이 적용됨
+            //하지만 그전에 트랜지션이 끝나버리면 종료콜백이 호출하면서 로직이 꼬일수 있음
             node.get('model').transition({
                 position : dest_position,
                 time : duration_time
             });
-
-            //}
-
+            //그래서 바로 아래에서 강제로 트랜스폼을 업데이트 해줌 이렇게 해부면 시간차에 의해서 값이 꼬이는 현상을 막아줌
+            node.update(true,0);
 
         }
 
@@ -239,5 +256,111 @@ Pig2d.util.controller = {
 
         }
 
-    }
+    },
+    //end of mouse spot controller
+
+    //드래그 컨트롤러
+    Drager : function (param) {
+
+
+        var listener_element = param.listener_element || document.body;
+        var node = param.node;
+
+        function callbackControl(movementX,movementY) {
+
+            //node.get('model').rotate(movementX);
+            //node.get('model').translate(movementY,new gbox3d.core.Vect2d(0,1));
+
+            if(node) {
+                node.get('model').translate(1,new gbox3d.core.Vect2d(movementX,movementY));
+            }
+        }
+
+
+        //이벤트처리
+        listener_element.addEventListener( 'mousedown', onDocumentMouseDown, false );
+        listener_element.addEventListener( 'touchstart', onDocumentTouchStart, false );
+        listener_element.addEventListener( 'touchmove', onDocumentTouchMove, false );
+
+
+        function onDocumentMouseDown( event ) {
+
+            event.preventDefault();
+
+            function findme() {
+                var target = event.target;
+                while(target) {
+
+                    //console.log(target);
+                    target = target.parentElement;
+
+                    if(node.get('model').get('element') == target) {
+                        //console.log('find me');
+                        return true;
+//                        break;
+                    }
+
+                }
+                return false
+            }
+
+            //선택된 노드를 클릭한 상태면...
+            if(findme()) {
+                listener_element.addEventListener( 'mousemove', onDocumentMouseMove, false );
+                listener_element.addEventListener( 'mouseup', onDocumentMouseUp, false );
+                //listener_element.addEventListener( 'mouseout', onDocumentMouseUp, false );
+            }
+
+
+        }
+
+        function onDocumentMouseMove( event ) {
+
+            var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
+            var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
+
+            callbackControl(movementX,-movementY);
+
+        }
+
+        function onDocumentMouseUp( event ) {
+
+            listener_element.removeEventListener( 'mousemove', onDocumentMouseMove );
+            listener_element.removeEventListener( 'mouseup', onDocumentMouseUp );
+
+        }
+
+        //터치 디바이스
+        var touchX,  touchY;
+
+        function onDocumentTouchStart( event ) {
+
+            event.preventDefault();
+
+            var touch = event.touches[ 0 ];
+
+            touchX = touch.screenX;
+            touchY = touch.screenY;
+
+        }
+
+        function onDocumentTouchMove( event ) {
+
+            event.preventDefault();
+
+            var touch = event.touches[ 0 ];
+
+            var movementX =  (touchX - touch.screenX);
+            var movementY =  (touchY - touch.screenY);
+            touchX = touch.screenX;
+            touchY = touch.screenY;
+
+            callbackControl(movementX,movementY);
+        }
+
+        this.setControlNode = function(target_node) {
+            node = target_node;
+        }
+
+    }// end of drag controller
 }

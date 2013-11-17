@@ -32,55 +32,77 @@
 
 <script>
 
-    //씬메니져 생성하기
-    var Smgr = new Pig2d.SceneManager({
-        container : document.querySelector('.pig2d-fullscreen')
+
+    function main(evt) {
+
+        var textures = evt.textures;
+
+        //씬메니져 생성하기
+        var Smgr = new Pig2d.SceneManager({
+            container : document.querySelector('.pig2d-fullscreen')
+        });
+
+        //스프라이트 노드 만들기
+        var node = Pig2d.util.createSlicedImage({
+            imgObj : textures['stateczek.png'],
+            basex : -textures['stateczek.png'].width/2,
+            basey : -textures['stateczek.png'].height/2
+        });
+
+        node.get('model').setPosition(300,200);
+
+        //씬메니져 등록하기
+        Smgr.add(node);
+
+
+        //컨트롤러 설정
+        Pig2d.util.setup_pig2dTestController(
+                document, //이벤트를 받을 대상 (여기서는 화면 전체임)
+                node//조종할 대상이 되는 오브잭트
+        );
+
+        //타이머 설정 및 퍼포먼트 테스트용 정보
+        var mytimer = new gbox3d.core.Timer();
+        var framerate_info = document.querySelector("#text-framerate-info");
+        var frame_total = 0;
+        var loop_count = 0;
+
+        //게임 루프
+        requestAnimationFrame(
+                function loop() {
+
+                    var deltaTime = mytimer.getDeltaTime();
+                    frame_total += Math.round(1.0 / deltaTime);
+
+                    loop_count++;
+
+                    framerate_info.innerText = Math.round(frame_total / loop_count);
+
+                    //씬메니져 업데이트
+                    //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+                    Smgr.updateAll();
+
+                    requestAnimationFrame(loop);
+
+                }
+        );
+
+    }
+
+    var img_files = [
+        'stateczek.png',
+        'Gepard.png',
+        'container.png'
+    ];
+
+
+    Pig2d.util.SetupAsset({
+        asset_path : "../res/Ships/",
+        img_files : img_files,
+        OnLoadComplete : main
+
     });
 
-    //스프라이트 노드 만들어서 씬노드메니져에 추가하기
-
-    var node = Smgr.addImageNode({
-        src : '../res/Ships/stateczek.png',
-        onload : function(node) {
-            console.log(node.get('model').get('imgObj').src + ' loaded ');
-        }
-    });
-
-    node.get('model').setPosition(300,200);
-
-
-    //컨트롤러 설정
-    Pig2d.util.setup_pig2dTestController(
-            document, //이벤트를 받을 대상 (여기서는 화면 전체임)
-            node//조종할 대상이 되는 오브잭트
-    );
-
-    //타이머 설정 및 퍼포먼트 테스트용 정보
-    var mytimer = new gbox3d.core.Timer();
-    var framerate_info = document.querySelector("#text-framerate-info");
-    var frame_total = 0;
-    var loop_count = 0;
-
-    //게임 루프
-    requestAnimationFrame(
-            function loop() {
-
-                var deltaTime = mytimer.getDeltaTime();
-                frame_total += Math.round(1.0 / deltaTime);
-
-                loop_count++;
-
-                framerate_info.innerText = Math.round(frame_total / loop_count);
-
-                //씬메니져 업데이트
-                //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
-                Smgr.updateAll();
-
-                requestAnimationFrame(loop);
-
-            }
-
-    );
 
 </script>
 
