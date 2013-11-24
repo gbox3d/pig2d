@@ -146,6 +146,7 @@ Pig2d.util.controller = {
         var listener_element = param.listener_element;
         var node = param.node;
         var speed = param.speed ? param.speed : 100;
+        var scroller = param.scroller;
 
         //console.log(speed);
 
@@ -177,18 +178,20 @@ Pig2d.util.controller = {
         var basePos = new gbox3d.core.Vect2d(0,0);
 
         this.setBasePos = function(x,y) {
-
             basePos.set(x,y);
-
         }
 
-
         function _callbackControl(posX,posY) {
-
 
             //일단 트랜지션을 종료하고 이동중간 위치에 멈추도록함
             node.get('model').stopTransition();
             node.update(true,0); //정확한 위치를 잡아내기위해서 업데이트를 해줌
+
+            if(scroller) {
+
+                this.setBasePos(-scroller.getCurrentScrollPos().X,-scroller.getCurrentScrollPos().Y);
+
+            }
 
             var new_pos = new gbox3d.core.Vect2d(posX +basePos.X  ,posY + basePos.Y);
 
@@ -200,11 +203,6 @@ Pig2d.util.controller = {
             vt.normalize();
 
             var duration_time = dist/(this.getSpeed()); //1초에 speed 만큼 이동
-
-            //console.log(cur_position);
-            //console.log(new_pos);
-            //if(duration_time > 0) {
-
             var dest_position = new_pos.clone();
 
             if(param.startCallBack != undefined) {
@@ -224,7 +222,7 @@ Pig2d.util.controller = {
                 position : dest_position,
                 time : duration_time
             });
-            //그래서 바로 아래에서 강제로 트랜스폼을 업데이트 해줌 이렇게 해부면 시간차에 의해서 값이 꼬이는 현상을 막아줌
+            //그래서 바로 아래에서 강제로 트랜스폼을 업데이트 해줌 , 시간차에 의해서 값이 꼬이는 현상을 막아줌
             node.update(true,0);
 
         }
@@ -236,7 +234,7 @@ Pig2d.util.controller = {
 
             event.preventDefault();
 
-            callbackControl(event.clientX,event.clientY);
+            callbackControl(event.layerX,event.layerY);
         }
 
 
@@ -265,6 +263,9 @@ Pig2d.util.controller = {
 
         var listener_element = param.listener_element || document.body;
         var node = param.node;
+        var OnDragStart = param.OnDragStart;
+        var OnDragEnd = param.OnDragEnd;
+        var OnDragMove = param.OnDragMove;
 
         function callbackControl(movementX,movementY) {
 
@@ -291,13 +292,11 @@ Pig2d.util.controller = {
                 var target = event.target;
                 while(target) {
 
-                    //console.log(target);
                     target = target.parentElement;
 
                     if(node.get('model').get('element') == target) {
-                        //console.log('find me');
+
                         return true;
-//                        break;
                     }
 
                 }
@@ -306,9 +305,15 @@ Pig2d.util.controller = {
 
             //선택된 노드를 클릭한 상태면...
             if(findme()) {
+                if(OnDragStart) {
+                    OnDragStart({
+                        node : node,
+                        originalEvent : event
+                    });
+                }
+
                 listener_element.addEventListener( 'mousemove', onDocumentMouseMove, false );
                 listener_element.addEventListener( 'mouseup', onDocumentMouseUp, false );
-                //listener_element.addEventListener( 'mouseout', onDocumentMouseUp, false );
             }
 
 
@@ -321,12 +326,26 @@ Pig2d.util.controller = {
 
             callbackControl(movementX,-movementY);
 
+            if(OnDragMove) {
+                OnDragMove({
+                    node : node,
+                    originalEvent : event
+                });
+            }
+
         }
 
         function onDocumentMouseUp( event ) {
 
             listener_element.removeEventListener( 'mousemove', onDocumentMouseMove );
             listener_element.removeEventListener( 'mouseup', onDocumentMouseUp );
+
+            if(OnDragEnd) {
+                OnDragEnd({
+                    node : node,
+                    originalEvent : event
+                });
+            }
 
         }
 

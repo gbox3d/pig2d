@@ -401,11 +401,13 @@ gbox3d.core.Vect2d.prototype.rotate = function(angle, center) {
 gbox3d.core.Vect2d.prototype.translate = function( param ) {
     this.X += param.X;
     this.Y += param.Y;
+    return this;
 }
 
 gbox3d.core.Vect2d.prototype.multiply = function(mult) {
 	this.X *= mult;
 	this.Y *= mult;
+    return this;
 }
 
 gbox3d.core.Vect2d.prototype.add = function(a) {
@@ -415,6 +417,7 @@ gbox3d.core.Vect2d.prototype.add = function(a) {
 gbox3d.core.Vect2d.prototype.addToThis = function(a) {
 	this.X += a.X;
 	this.Y += a.Y;
+    return this;
 }
 
 
@@ -432,6 +435,8 @@ gbox3d.core.Vect2d.prototype.sub = function(a,b) {
 gbox3d.core.Vect2d.prototype.subToThis = function(a) {
 	this.X -= a.X;
 	this.Y -= a.Y;
+
+    return this;
 }
 
 gbox3d.core.Vect2d.prototype.getDistance = function() {
@@ -443,21 +448,25 @@ gbox3d.core.Vect2d.prototype.normalize = function() {
 	// Math.sqrt(this.X * this.X + this.Y * this.Y);
 	this.X /= dist;
 	this.Y /= dist;
+    return this;
 }
 
 gbox3d.core.Vect2d.prototype.set = function(x, y) {
 	this.X = x;
 	this.Y = y;
+    return this;
 }
 
 gbox3d.core.Vect2d.prototype.copy = function(a) {
 	this.X = a.X;
 	this.Y = a.Y;
+    return this;
 }
 
 gbox3d.core.Vect2d.prototype.set_point = function(a) {
 	this.X = a.x;
 	this.Y = a.y;
+    return this;
 }
 
 gbox3d.core.Vect2d.prototype.clone = function() {
@@ -579,6 +588,10 @@ gbox3d.core.Vect2d.prototype.InPolygon = function(points) {
 
     return ( counter % 2 == 1 );
 };
+
+gbox3d.core.Vect2d.prototype.toString = function() {
+    return '{"X" :' + this.X + ',"Y":' + this.Y + '}';
+}
 
 ///////////////////////////////////////////////////////////
 //box 2D

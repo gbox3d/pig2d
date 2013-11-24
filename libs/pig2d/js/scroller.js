@@ -24,20 +24,23 @@ Pig2d.util.scroller = {
         scroll_root.add(back_node);
         scroll_root.add(front_node);
 
-
-
+        //트랜지션 세팅
         scroll_root.get('model').setupTransition({
             TransitionEndCallBack : function() {
-                //console.log(node);
-                //console.log(this.getPosition());
             }
         });
 
         back_node.get('model').setupTransition({
             TransitionEndCallBack : (function() {
-                //console.log(this.get('model').getPosition());
             })
         });
+
+        this.setScrollPosDirect = function(posx) {
+            scroll_root.get('model').setPosition(posx,0);
+
+            back_node.get('model').setPosition(-posx * backlayer_rate,0);
+            //scroll_root.update(true,0);
+        }
 
         this.setScrollPos = function(posx) {
             //먼저 트랜지션을 취소한다.

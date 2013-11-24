@@ -139,6 +139,99 @@ Pig2d.system = {
 
 
         })();
+    },
+    InitAssetSystem : function(param) {
+
+        function ProcessAsset(data) {
+            var assetData = {};
+
+            assetData = data;
+            assetData.OnLoadComplete = (function(resData) {
+
+                //프레임을 표시하기위해서 필요한 캔버스 최대 크기를 구한다.
+                function calcMaxCanvasSize(animations) {
+
+                    function getCanvasSize(animation) {
+
+                        var maxw=0,maxh=0;
+                        for(var i=0;i< animation.frames.length;i++) {
+
+                            var width = animation.frames[i].sheets[0].width;
+                            var height = animation.frames[i].sheets[0].height;
+
+                            if(maxw < width ) {
+                                maxw = width
+                            }
+
+                            if(maxh < height ) {
+                                maxh = height
+                            }
+                        }
+
+                        animation.canvas_size = {
+                            width : maxw,
+                            height : maxh
+                        };
+                    }
+
+                    for(var key in animations) {
+                        getCanvasSize(animations[key]);
+                    }
+                }
+                calcMaxCanvasSize(resData.animations);
+
+
+                this.getAssetDataInfo = function (name) {
+
+                    var object_info = this.objects[name];
+
+                    return {
+                        texture : resData.textures[this.img_files[object_info.texture]],
+                        animation : resData.animations[this.animation_files[object_info.animation]]
+                    }
+
+                }
+
+                this.resData = resData;
+
+
+
+                param.OnLoadComplete(this);
+            }).bind(assetData);
+
+            assetData.OnLoadProgress = param.OnLoadProgress;
+
+
+            Pig2d.system.LoadAsset(
+                assetData
+            );
+
+        }
+
+        if(param.filename) {
+            $.ajax({
+                type : "GET",
+                url : param.filename,
+                dataType : "json",
+                success : function(data,status,xhr) {
+
+                    ProcessAsset(data);
+
+                },
+                error : function(evt,status,xhr) {
+
+                    console.log(status);
+
+                }
+            });
+        }
+        else if(param.data) {
+            ProcessAsset(param.data);
+        }
+
+
+
+
     }
 
 }

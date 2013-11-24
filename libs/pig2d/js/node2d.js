@@ -400,6 +400,36 @@ Pig2d.SpriteModel = Pig2d.model.extend({
             sheet.height = this.attributes.data.canvas_size.height;
         }
     },
+    setScaler : function(scale) {
+        this.attributes.scaler = scale;
+
+        if(this.attributes.data.canvas_size) {
+            var sheet = this.get('sheet');
+
+            this.attributes.data.canvas_size.width *= scale;
+            this.attributes.data.canvas_size.height *= scale;
+
+            sheet.width = this.attributes.data.canvas_size.width;
+            sheet.height = this.attributes.data.canvas_size.height;
+        }
+
+    },
+    changeDress : function(param) {
+
+        this.attributes.imgObj = param.texture;
+        this.attributes.data = param.animation;
+
+        var sheet = this.get('sheet');
+
+        if(this.attributes.data.canvas_size) {
+
+            sheet.width = this.attributes.data.canvas_size.width;
+            sheet.height = this.attributes.data.canvas_size.height;
+        }
+
+        this.setFrame(this.attributes.currentFrame);
+
+    },
     clone : function() {
 
         var model  = Backbone.Model.prototype.clone.call(this);
@@ -432,6 +462,9 @@ Pig2d.SpriteModel = Pig2d.model.extend({
             var sheet = this.attributes.sheet;
             var ctx	= this.attributes.sheetCTX;
             var frame = this.attributes.data.frames[this.attributes.currentFrame];
+
+            //console.log(this.attributes.currentFrame);
+
             var sheet_data = frame.sheets[0];
 
             var scaler = this.attributes.scaler;
@@ -450,17 +483,43 @@ Pig2d.SpriteModel = Pig2d.model.extend({
             var offsetX = sheet_data.centerOffset.x;
             var offsetY = sheet_data.centerOffset.y;
 
+            var destW = sheet_data.width;
+            var destH = sheet_data.height;
+
+            var cutx = -sheet_data.bp_x;
+            var cuty = -sheet_data.bp_y;
+
+            var srcW = sheet_data.width;
+            var srcH = sheet_data.height;
+
+            if(scaler < 1.0) {
+
+                offsetX *= scaler;
+                offsetY *= scaler;
+
+                destW *= scaler;
+                destH *= scaler;
+
+                //srcW *= scaler;
+                //srcH *= scaler;
+
+                //cutx *= scaler;
+                //cuty *= scaler;
+
+            }
+
             sheet.style.webkitTransform = "translate(" + offsetX + "px," + offsetY + "px)";
 
             ctx.drawImage(
-                this.get('imgObj'),
-                -sheet_data.bp_x,-sheet_data.bp_y,sheet_data.width,sheet_data.height
-                ,0,0,sheet_data.width ,sheet_data.height
+                imgObj,
+                cutx,cuty,srcW,srcH,
+                0,0,destW,destH
             );
         }
 
         return this;
     },
+    /*
     start_animate : function(param) {
 
         var delay = this.get('data').frames[0].delay;
@@ -529,6 +588,7 @@ Pig2d.SpriteModel = Pig2d.model.extend({
         }).bind(this);
 
     },
+    */
 
     /////////////////////////////////////////////
     /////new animation system////////////////////
@@ -540,7 +600,17 @@ Pig2d.SpriteModel = Pig2d.model.extend({
 
         this.attributes.startFrame = param.startFrame ? param.startFrame : 0 ;
         this.attributes.endFrame = param.endFrame ? param.endFrame : (this.get('data').frames.length-1);
-        this.attributes.isAnimationLoop = param.isAnimationLoop ? param.isAnimationLoop : true;
+
+        if(param.isAnimationLoop !== undefined) {
+            this.attributes.isAnimationLoop = param.isAnimationLoop;
+        }
+        else {
+            this.attributes.isAnimationLoop = true;
+        }
+
+        this.attributes.AnimationEndCallback = param.AnimationEndCallback;
+
+
         this.attributes.AnimationStatus = param.AnimationStatus ? param.AnimationStatus : 'play';
 
         this.setFrame(this.attributes.startFrame);
@@ -558,23 +628,21 @@ Pig2d.SpriteModel = Pig2d.model.extend({
 
             var delay = Ani_data.frames[frameindex].delay / 1000;
 
-            //console.log(this.attributes.currentTick);
-
             if(this.attributes.currentTick > delay) {
                 this.attributes.currentTick = 0;
                 ++frameindex;
-
-                //console.log(this.attributes.endFrame);
 
                 if(frameindex > this.attributes.endFrame) {//마지막 프레임이면
 
                     if(this.attributes.isAnimationLoop) {
                         frameindex = this.attributes.startFrame;
+                        this.setFrame(frameindex);
                     }
                     else {
                         this.attributes.AnimationStatus = 'stop';
                         frameindex = this.attributes.endFrame;
                     }
+
 
                     if(this.attributes.AnimationEndCallback != undefined) {
 
@@ -584,10 +652,10 @@ Pig2d.SpriteModel = Pig2d.model.extend({
 
                 }
                 else {
-
+                    this.setFrame(frameindex);
                 }
 
-                this.setFrame(frameindex);
+
 
             }
         }
@@ -597,13 +665,13 @@ Pig2d.SpriteModel = Pig2d.model.extend({
 
     },
     stopAnimation : function() {
-
+        this.attributes.AnimationStatus = 'stop';
     },
     ////////////////////////
 
     destroy : function() {
 
-        this.stop_animate();
+        //this.stop_animate();
 
         //슈퍼 클래싱
         Pig2d.model.prototype.destroy.call(this);
@@ -675,6 +743,17 @@ Pig2d.node = Backbone.Model.extend({
 
         for(var index in this.attributes.chiledren ) {
             var obj = this.attributes.chiledren[index].findByName(name);
+            if(obj != null)
+                return obj;
+        }
+        return null;
+    },
+    findByID : function(cid) {
+
+        if(cid == this.cid) return this;
+
+        for(var index in this.attributes.chiledren ) {
+            var obj = this.attributes.chiledren[index].findByID(cid);
             if(obj != null)
                 return obj;
         }
@@ -863,7 +942,9 @@ Pig2d.SceneManager = Backbone.Model.extend({
     }
 
 
+
 });
+
 //end of scene manager
 
 ////////////////////////
@@ -912,6 +993,13 @@ Pig2d.util = {
         return node;
     },
     ////////////////
+    /*
+    인자 리스트
+    startFrame
+    endFrame
+    animation
+    texture
+     */
     createSprite : function(param) {
 
 
