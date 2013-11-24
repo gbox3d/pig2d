@@ -29,22 +29,20 @@ node , model , scenemanager
 CDN 버전
 
 ```html
-<link href="https://rawgithub.com/gbox3d/pig2d/master/libs/pig2d/css/core.css" rel="stylesheet"></link>
+<link href="http://gbox3d.github.io/pig2d/libs/pig2d/css/core.css" rel="stylesheet"></link>
 
 <script src="http://code.jquery.com/jquery-latest.js"></script>
 
     
-<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/backbone/underscore-min.js"></script>
-<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/backbone/backbone-min.js"></script>
+<script src="http://gbox3d.github.io/pig2d/libs/backbone/underscore-min.js"></script>
+<script src="http://gbox3d.github.io/pig2d/libs/backbone/backbone-min.js"></script>
 
-<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/pig2d/js/core.js"></script>
-<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/pig2d/js/node2d.js"></script>
+<script src="http://gbox3d.github.io/pig2d/libs/pig2d/js/core.js"></script>
+<script src="http://gbox3d.github.io/pig2d/libs/pig2d/js/node2d.js"></script>
 
 ```
 
-https://rawgithub.com/gbox3d/  대신에  http://gbox3d.github.io/ 로 해주셔도 됩니다.
-
-기본 1 형식
+기본 예제
 
 전체화면모드로 씬을 만들고 그안에서 노드로 씬을 구성합니다.
 
