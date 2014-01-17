@@ -13,9 +13,7 @@ root {
 */
 
 * {
-    /*margin: 0px;*/
     -webkit-tap-highlight-color: rgba(0,0,0,0);
-    /*-webkit-user-select: none;*/
 }
 
 .pig2d-fullscreen {
@@ -34,6 +32,7 @@ root {
 
 .pig2d-node {
     position: absolute;
+    margin: 0px;
     -webkit-transform-origin : 0% 0%;
 
 }
