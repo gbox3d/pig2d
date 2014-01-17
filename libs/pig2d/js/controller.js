@@ -267,43 +267,87 @@ Pig2d.util.controller = {
         var OnDragEnd = param.OnDragEnd;
         var OnDragMove = param.OnDragMove;
 
-        function callbackControl(movementX,movementY) {
+        var camera_node = param.camera;
 
-            //node.get('model').rotate(movementX);
-            //node.get('model').translate(movementY,new gbox3d.core.Vect2d(0,1));
-
-            if(node) {
-                node.get('model').translate(1,new gbox3d.core.Vect2d(movementX,movementY));
-            }
+        //기존 이벤트가 있었는지 검사
+        if(node.Dragger) {
+            node.Dragger.clear();
         }
 
+        node.Dragger = this;
 
         //이벤트처리
         listener_element.addEventListener( 'mousedown', onDocumentMouseDown, false );
         listener_element.addEventListener( 'touchstart', onDocumentTouchStart, false );
         listener_element.addEventListener( 'touchmove', onDocumentTouchMove, false );
 
+        function callbackControl(movementX,movementY) {
+
+            if(node) {
+
+                if(camera_node) {
+
+                    var scale = camera_node.get('model').getScale().X;
+
+                    //console.log(scale);
+
+                    movementX *= 1/scale;
+                    movementY *= 1/scale;
+
+                }
+
+                node.get('model').translate(1,new gbox3d.core.Vect2d(movementX,movementY));
+            }
+        }
+
+
+        //기존 이밴트 핸들러 모두 클리어
+//        (function clearAllEventHandler (old_element) {
+//            var new_element = old_element.cloneNode(true);
+//            old_element.parentNode.replaceChild(new_element, old_element);
+//
+//        })(listener_element);
+
 
         function onDocumentMouseDown( event ) {
 
             event.preventDefault();
 
+            //console.log(event.target);
+
             function findme() {
+
+
+                var target = event.target;
+
+                //타겟노드에 전달된 값을 참고 하여 노드를 확인한다.
+                if(target.target_node) {
+                    if(target.target_node == node) {
+                        return true;
+                    }
+                }
+
+
+                return false;
+
+
+                /*
                 var target = event.target;
                 while(target) {
-
-                    target = target.parentElement;
 
                     if(node.get('model').get('element') == target) {
 
                         return true;
                     }
 
+                    target = target.parentElement;
+
                 }
-                return false
+                return false;
+                */
             }
 
-            //선택된 노드를 클릭한 상태면...
+            //해당 앨리먼트를 자식으로 가지고 있는 노드가 맞다면...
             if(findme()) {
                 if(OnDragStart) {
                     OnDragStart({
@@ -312,10 +356,12 @@ Pig2d.util.controller = {
                     });
                 }
 
+
                 listener_element.addEventListener( 'mousemove', onDocumentMouseMove, false );
                 listener_element.addEventListener( 'mouseup', onDocumentMouseUp, false );
             }
 
+            //console.log(node.get('model').get('element'));
 
         }
 
@@ -333,6 +379,7 @@ Pig2d.util.controller = {
                 });
             }
 
+
         }
 
         function onDocumentMouseUp( event ) {
@@ -346,6 +393,7 @@ Pig2d.util.controller = {
                     originalEvent : event
                 });
             }
+            event.stopPropagation(); //부모로 이밴트 전달 금지
 
         }
 
@@ -379,6 +427,12 @@ Pig2d.util.controller = {
 
         this.setControlNode = function(target_node) {
             node = target_node;
+        }
+        this.clear = function() {
+            //이전 이밴트 리스너 클리어..
+            listener_element.removeEventListener( 'mousedown', onDocumentMouseDown );
+            listener_element.removeEventListener( 'touchstart', onDocumentTouchStart );
+            listener_element.removeEventListener( 'touchmove', onDocumentTouchMove );
         }
 
     }// end of drag controller

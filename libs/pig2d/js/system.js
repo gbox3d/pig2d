@@ -143,9 +143,9 @@ Pig2d.system = {
     InitAssetSystem : function(param) {
 
         function ProcessAsset(data) {
-            var assetData = {};
 
-            assetData = data;
+            var assetData = data;
+            //assetData = data;
             assetData.OnLoadComplete = (function(resData) {
 
                 //프레임을 표시하기위해서 필요한 캔버스 최대 크기를 구한다.
@@ -214,6 +214,8 @@ Pig2d.system = {
                 url : param.filename,
                 dataType : "json",
                 success : function(data,status,xhr) {
+
+                    console.log(data);
 
                     ProcessAsset(data);
 

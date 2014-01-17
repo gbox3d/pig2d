@@ -127,6 +127,14 @@ Pig2d.model = Backbone.Model.extend({
         };
 
     }(),
+    show : function(visible) {
+        this.get('element').style.visibility = visible ? 'inherit' : 'hidden';
+    },
+    isVisible : function() {
+
+        return (this.get('element').style.visibility == 'hidden') ? false : true;
+
+    },
 
     /////////////////////
     ////행렬관련
@@ -176,6 +184,12 @@ Pig2d.model = Backbone.Model.extend({
 
         element.style.WebkitTransition = '';
         this.attributes.TransitionEndCallBack = param.TransitionEndCallBack;
+
+        if(this.attributes._TransitionEndCallBack != undefined) {
+
+            element.removeEventListener('webkitTransitionEnd',this.attributes._TransitionEndCallBack);
+
+        }
 
         this.attributes._TransitionEndCallBack = function(event) {
 
@@ -272,7 +286,6 @@ Pig2d.model = Backbone.Model.extend({
         el.removeEventListener('webkitTransitionEnd',this.attributes._TransitionEndCallBack);
         this.attributes.update_signal = 'stop_transition';
 
-
     },
     ////////////////////
     updateCSS : function() {
@@ -347,21 +360,85 @@ Pig2d.model = Backbone.Model.extend({
 
 
     },
+    ///////////////////////////////////////////
 
+    setupCssAnimation : function(option) {
+
+        var element = this.get('element');
+
+        element.style.WebkitAnimationName = option.name;
+        element.style.WebkitAnimationDuration = option.duration;
+
+        if(option.timing_function) {
+            element.style.WebkitAnimationTimingFunction = option.timing_function;
+        }
+        if(option.delay) {
+            element.style.WebkitAnimationDelay = option.delay;
+
+        }
+        if(option.direction) {
+            element.style.WebkitAnimationDirection = option.direction;
+
+        }
+        if(option.iteration_count) {
+            element.style.WebkitAnimationIterationCount = option.iteration_count;
+        }
+
+        element.style.WebkitAnimationPlayState = 'running';
+
+        this.attributes.CssAnimationEndCallBack = option.EndCallBack;
+
+        if(this.attributes._CssAnimationEndCallBack != undefined) {
+
+            element.removeEventListener('webkitAnimationEnd',this.attributes._CssAnimationEndCallBack);
+
+        }
+
+        this.attributes._CssAnimationEndCallBack = function(event) {
+
+            element.style.WebkitAnimation = '';
+            if(this.attributes.CssAnimationEndCallBack != undefined) {
+
+                this.attributes.CssAnimationEndCallBack.apply(this);
+
+            }
+
+            //이밴트 전달 금지
+            event.cancelBubble = true;
+            event.stopPropagation();
+
+        }.bind(this);
+
+        element.addEventListener('webkitAnimationEnd',this.attributes._CssAnimationEndCallBack,false);
+
+        return this;
+    },
     //////////////////////////
     //노드에서 완전히 제거할때 사용됨
     destroy : function() {
 
         var el = this.get('element');
-        //el.removeEventListener('webkitTransitionEnd');
         this.clearTransition();
         el.parentNode.removeChild(el);
 
     },
     clone : function() {
         var model  = Backbone.Model.prototype.clone.call(this);
-//        console.log(model);
-        model.set("element",this.get('element').cloneNode(true));
+
+        model.attributes.translation =  this.attributes.translation.clone();
+        model.attributes.scale =  this.attributes.scale.clone();
+        model.attributes.rotation = this.attributes.rotation;
+
+        var clone_node = this.get('element').cloneNode(true);
+
+        //원본노드의 자식노드로되어있는 부분은 삭제한다.
+        var old_child = clone_node.querySelector('.pig2d-node');
+        if(old_child) {
+            clone_node.removeChild(old_child);
+        }
+
+        model.set("element",clone_node);
+
         return model;
 
     }
@@ -388,8 +465,6 @@ Pig2d.SpriteModel = Pig2d.model.extend({
         this.set('sheet',sheet);
         this.set('sheetCTX',sheet.getContext('2d'));
 
-        this.setFrame(0);
-
         this.attributes.currentTick = 0;
 
         this.attributes.scaler = 1;
@@ -399,6 +474,13 @@ Pig2d.SpriteModel = Pig2d.model.extend({
             sheet.width = this.attributes.data.canvas_size.width;
             sheet.height = this.attributes.data.canvas_size.height;
         }
+
+        //캔버스 클리어 일부 삼성폰들은 초기화를 안할경우 잔상이 생긴다.
+        //this.get('sheetCTX').clearRect(0,0,sheet.width,sheet.height);
+
+        //this.setFrame(-1);
+        //this.attributes.AnimationStatus = 'ready';
+
     },
     setScaler : function(scale) {
         this.attributes.scaler = scale;
@@ -455,141 +537,93 @@ Pig2d.SpriteModel = Pig2d.model.extend({
 
         var imgObj = this.attributes.imgObj;
 
+        if(this.attributes.data.frames.length <= index) {
+
+            console.log('error exeed frame number : ' + index + ',' + this.attributes.data.frames.length);
+            index = 0;
+        }
+
 
         if(imgObj != undefined) {
             this.set('currentFrame',index);
 
             var sheet = this.attributes.sheet;
             var ctx	= this.attributes.sheetCTX;
-            var frame = this.attributes.data.frames[this.attributes.currentFrame];
 
-            //console.log(this.attributes.currentFrame);
+            /*
+            공백프레임을 만든 이유 :
+            일부 폰들(삼성폰)에서 캔버스를 처음생성한후 맨처음 랜더링된 이미지가 지워지지않고 남아 있는 현상들이 발생함
+            그래서 캔버스처음생성할때(changeDress,createSprite)할때는 반드시 공백프레임을 화면에 한번출력을 해주어야함
 
-            var sheet_data = frame.sheets[0];
+             */
+            if(index < 0) { //공프레임 이면..
 
-            var scaler = this.attributes.scaler;
+                if(this.attributes.data.canvas_size) {
 
-            if(this.attributes.data.canvas_size) {
+                    sheet.width = this.attributes.data.canvas_size.width;
+                    sheet.height = this.attributes.data.canvas_size.height;
 
-                ctx.clearRect(0,0,this.attributes.data.canvas_size.width,this.attributes.data.canvas_size.height);
-
-            }
-            else {
-                sheet.width = sheet_data.width;
-                sheet.height = sheet_data.height;
-            }
-
-
-            var offsetX = sheet_data.centerOffset.x;
-            var offsetY = sheet_data.centerOffset.y;
-
-            var destW = sheet_data.width;
-            var destH = sheet_data.height;
-
-            var cutx = -sheet_data.bp_x;
-            var cuty = -sheet_data.bp_y;
-
-            var srcW = sheet_data.width;
-            var srcH = sheet_data.height;
-
-            if(scaler < 1.0) {
-
-                offsetX *= scaler;
-                offsetY *= scaler;
-
-                destW *= scaler;
-                destH *= scaler;
-
-                //srcW *= scaler;
-                //srcH *= scaler;
-
-                //cutx *= scaler;
-                //cuty *= scaler;
-
-            }
-
-            sheet.style.webkitTransform = "translate(" + offsetX + "px," + offsetY + "px)";
-
-            ctx.drawImage(
-                imgObj,
-                cutx,cuty,srcW,srcH,
-                0,0,destW,destH
-            );
-        }
-
-        return this;
-    },
-    /*
-    start_animate : function(param) {
-
-        var delay = this.get('data').frames[0].delay;
-        this.setFrame(0);
-
-        setTimeout(this.animate(param).bind(this),delay);
-
-
-    },
-    stop_animate : function() {
-
-        if(this.attributes.animationHID != null) {
-            clearTimeout(this.attributes.animationHID);
-            this.attributes.animationHID = null;
-        }
-    },
-    animate : function(param) {
-
-        param = param || {};
-
-        var loop = param.loop || false;
-
-        var frameindex =  this.get('currentFrame');
-
-        var data = this.get('data');
-
-        return (function() {
-
-            var endFrame = param.endFrame || data.frames.length - 1;
-
-            if(frameindex >= endFrame) {//마지막 프레임이면
-
-                param.endCallBack ? param.endCallBack(this) : (function(){})();
-
-                if(loop == true) {
-
-                    if(param.startFrame != undefined ) {
-                        if(!param.startFrame)
-                        {
-                            frameindex = 0;
-                        }
-                        else {
-                            frameindex = param.startFrame;
-                        }
-
-                    }else {
-                        frameindex = 0;
-                    }
-                    this.setFrame(frameindex);
-                    var delay = data.frames[frameindex].delay;
-
-                    this.attributes.animationHID = setTimeout(this.animate(param).bind(this),delay);
+                    ctx.clearRect(0,0,this.attributes.data.canvas_size.width,this.attributes.data.canvas_size.height);
                 }
 
             }
             else {
+                var frame = this.attributes.data.frames[this.attributes.currentFrame];
 
-                ++frameindex;
+                //console.log(this.attributes.currentFrame);
 
-                this.setFrame(frameindex);
-                var delay = data.frames[frameindex].delay;
-                this.attributes.animationHID =setTimeout(this.animate(param).bind(this),delay);
+                var sheet_data = frame.sheets[0];
+
+                var scaler = this.attributes.scaler;
+
+                if(this.attributes.data.canvas_size) {
+
+                    ctx.clearRect(0,0,this.attributes.data.canvas_size.width,this.attributes.data.canvas_size.height);
+
+                    //sheet.width = 1;
+                    //sheet.width = this.attributes.data.canvas_size.width;
+
+                }
+                else {
+                    sheet.width = sheet_data.width;
+                    sheet.height = sheet_data.height;
+                }
+
+                var offsetX = sheet_data.centerOffset.x;
+                var offsetY = sheet_data.centerOffset.y;
+
+                var destW = sheet_data.width;
+                var destH = sheet_data.height;
+
+                var cutx = -sheet_data.bp_x;
+                var cuty = -sheet_data.bp_y;
+
+                var srcW = sheet_data.width;
+                var srcH = sheet_data.height;
+
+                if(scaler < 1.0) {
+
+                    offsetX *= scaler;
+                    offsetY *= scaler;
+
+                    destW *= scaler;
+                    destH *= scaler;
+
+                }
+
+                sheet.style.webkitTransform = "translate(" + offsetX + "px," + offsetY + "px)";
+
+                ctx.drawImage(
+                    imgObj,
+                    cutx,cuty,srcW,srcH,
+                    0,0,destW,destH
+                );
             }
 
+        }
 
-        }).bind(this);
-
+        return this;
     },
-    */
-
     /////////////////////////////////////////////
     /////new animation system////////////////////
     /////////////////////////////////////////////
@@ -611,22 +645,24 @@ Pig2d.SpriteModel = Pig2d.model.extend({
         this.attributes.AnimationEndCallback = param.AnimationEndCallback;
 
 
-        this.attributes.AnimationStatus = param.AnimationStatus ? param.AnimationStatus : 'play';
+        this.attributes.AnimationStatus = param.AnimationStatus ? param.AnimationStatus : 'stop';
 
         this.setFrame(this.attributes.startFrame);
 
     },
     applyAnimation : function(delataTick) {
 
-
-        //console.log(delataTick);
-
         if(this.attributes.AnimationStatus == 'play') {
             this.attributes.currentTick += delataTick;
             var frameindex =  this.attributes.currentFrame;
             var Ani_data = this.get('data');
 
-            var delay = Ani_data.frames[frameindex].delay / 1000;
+            var delay = 300;
+            if(frameindex >= 0) {
+                delay = Ani_data.frames[frameindex].delay / 1000;
+            }
+
+            //var delay = Ani_data.frames[frameindex].delay / 1000;
 
             if(this.attributes.currentTick > delay) {
                 this.attributes.currentTick = 0;
@@ -654,12 +690,13 @@ Pig2d.SpriteModel = Pig2d.model.extend({
                 else {
                     this.setFrame(frameindex);
                 }
-
-
-
             }
         }
-        else {
+        else if(this.attributes.AnimationStatus == 'ready') {
+
+            this.setFrame(-1);
+            this.attributes.AnimationStatus = 'play';
+            this.attributes.currentFrame = this.attributes.startFrame;
 
         }
 
@@ -687,7 +724,7 @@ Pig2d.SpriteModel = Pig2d.model.extend({
 
 Pig2d.node = Backbone.Model.extend({
     initialize: function() {
-        this.attributes.chiledren = new Array();
+        this.attributes.children = this.attributes.chiledren = new Array();
 
 //        _.bindAll(this,"update","clone");
 
@@ -715,11 +752,22 @@ Pig2d.node = Backbone.Model.extend({
         return this;
 
     },
-    clone : function() {
+    clone : function(option) {
+
+        if(!option) {
+            option = {};
+        }
 
         //딥 클로닝
-
         var node  = Backbone.Model.prototype.clone.call(this);
+
+        if(option.extendCallBack) {
+            option.extendCallBack({
+                original : this,
+                clone : node
+            });
+        }
+
 
         if(node.get('model')) {
 
@@ -732,7 +780,7 @@ Pig2d.node = Backbone.Model.extend({
 
         for(var i=0;i<chiledren.length;i++) {
 
-            node.add(chiledren[i].clone());
+            node.add(chiledren[i].clone(option));
         }
 
         return node;
@@ -766,6 +814,8 @@ Pig2d.node = Backbone.Model.extend({
         }
 
         parents.get('chiledren').push(child_node);
+
+        //child_node.setParent(parents);
 
         //모델이 존재하면
         if(parents.get('model')) {
@@ -828,21 +878,25 @@ Pig2d.node = Backbone.Model.extend({
     },
     show : function(visible) {
 
-        console.log(this.get('model').get('element'));
+        //console.log(this.get('model').get('element'));
+        //this.get('model').get('element').style.visibility = visible ? 'inherit' : 'hidden';
+        this.get('model').show(visible);
+    },
+    isVisible : function() {
 
-        this.get('model').get('element').style.visibility = visible ? 'visible' : 'hidden';
+        //return (this.get('model').get('element').style.visibility == 'hidden') ? false : true;
+        return this.get('model').isVisible();
+
     }
-
 });
+
+
 //end of node
 ///////////////
 ///
 Pig2d.SceneManager = Backbone.Model.extend({
 
     initialize: function(param) {
-
-
-       // param.window_size = param.window_size ? param.window_size : {};
 
         var rootNode = new Pig2d.node(
             {
@@ -868,8 +922,6 @@ Pig2d.SceneManager = Backbone.Model.extend({
 
             rootElement.style.backgroundColor = param.bkg_color;
         }
-
-
 
         this.attributes.container.appendChild(rootElement);
         this.attributes.rootNode = rootNode;
@@ -973,6 +1025,9 @@ Pig2d.util = {
         var basey = param.basey || 0;
 
         var canvas	= document.createElement( 'canvas' );
+
+        model.set('sheet',canvas);
+
         canvas.width	= param.width || param.imgObj.width;
         canvas.height	= param.height || param.imgObj.height;
 
@@ -1008,11 +1063,27 @@ Pig2d.util = {
 
         //노드생성
         var node = new Pig2d.node();
-        var model =  new Pig2d.SpriteModel( {
-                data : param.animation,
-                imgObj : param.texture
-            }
-        );
+
+        var model;
+        if(param.canvas_size) {
+            model =  new Pig2d.SpriteModel.fixedCanvas( {
+                    data : param.animation,
+                    imgObj : param.texture,
+                    canvas_size : param.canvas_size
+                }
+            );
+
+        }
+        else {
+            model =  new Pig2d.SpriteModel( {
+                    data : param.animation,
+                    imgObj : param.texture
+                }
+            );
+
+        }
+
+
         node.set(
             { model : model }
         );
@@ -1035,7 +1106,7 @@ Pig2d.util = {
             }
         );
 
-        console.log('create img');
+        console.log('create image');
 
         if(param.center) {
 
