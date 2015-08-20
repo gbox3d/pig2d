@@ -269,18 +269,6 @@ Pig2d.util.controller = {
 
         var camera_node = param.camera;
 
-        //기존 이벤트가 있었는지 검사
-        if(node.Dragger) {
-            node.Dragger.clear();
-        }
-
-        node.Dragger = this;
-
-        //이벤트처리
-        listener_element.addEventListener( 'mousedown', onDocumentMouseDown, false );
-        listener_element.addEventListener( 'touchstart', onDocumentTouchStart, false );
-        listener_element.addEventListener( 'touchmove', onDocumentTouchMove, false );
-
         function callbackControl(movementX,movementY) {
 
             if(node) {
@@ -301,12 +289,10 @@ Pig2d.util.controller = {
         }
 
 
-        //기존 이밴트 핸들러 모두 클리어
-//        (function clearAllEventHandler (old_element) {
-//            var new_element = old_element.cloneNode(true);
-//            old_element.parentNode.replaceChild(new_element, old_element);
-//
-//        })(listener_element);
+        //이벤트처리
+        listener_element.addEventListener( 'mousedown', onDocumentMouseDown, false );
+        listener_element.addEventListener( 'touchstart', onDocumentTouchStart, false );
+        listener_element.addEventListener( 'touchmove', onDocumentTouchMove, false );
 
 
         function onDocumentMouseDown( event ) {
@@ -427,12 +413,6 @@ Pig2d.util.controller = {
 
         this.setControlNode = function(target_node) {
             node = target_node;
-        }
-        this.clear = function() {
-            //이전 이밴트 리스너 클리어..
-            listener_element.removeEventListener( 'mousedown', onDocumentMouseDown );
-            listener_element.removeEventListener( 'touchstart', onDocumentTouchStart );
-            listener_element.removeEventListener( 'touchmove', onDocumentTouchMove );
         }
 
     }// end of drag controller

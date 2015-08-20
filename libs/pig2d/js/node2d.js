@@ -6,6 +6,9 @@
  * version : 0.8
  * it is parts of pig2d engine
  * this engine is base on html5 css3
+
+ 최종수정 : 2015.1.16
+
  */
 
 
@@ -418,27 +421,15 @@ Pig2d.model = Backbone.Model.extend({
     destroy : function() {
 
         var el = this.get('element');
+        //el.removeEventListener('webkitTransitionEnd');
         this.clearTransition();
         el.parentNode.removeChild(el);
 
     },
     clone : function() {
         var model  = Backbone.Model.prototype.clone.call(this);
-
-        model.attributes.translation =  this.attributes.translation.clone();
-        model.attributes.scale =  this.attributes.scale.clone();
-        model.attributes.rotation = this.attributes.rotation;
-
-        var clone_node = this.get('element').cloneNode(true);
-
-        //원본노드의 자식노드로되어있는 부분은 삭제한다.
-        var old_child = clone_node.querySelector('.pig2d-node');
-        if(old_child) {
-            clone_node.removeChild(old_child);
-        }
-
-        model.set("element",clone_node);
-
+//        console.log(model);
+        model.set("element",this.get('element').cloneNode(true));
         return model;
 
     }
@@ -752,22 +743,11 @@ Pig2d.node = Backbone.Model.extend({
         return this;
 
     },
-    clone : function(option) {
-
-        if(!option) {
-            option = {};
-        }
+    clone : function() {
 
         //딥 클로닝
+
         var node  = Backbone.Model.prototype.clone.call(this);
-
-        if(option.extendCallBack) {
-            option.extendCallBack({
-                original : this,
-                clone : node
-            });
-        }
-
 
         if(node.get('model')) {
 
@@ -780,7 +760,7 @@ Pig2d.node = Backbone.Model.extend({
 
         for(var i=0;i<chiledren.length;i++) {
 
-            node.add(chiledren[i].clone(option));
+            node.add(chiledren[i].clone());
         }
 
         return node;
@@ -998,308 +978,6 @@ Pig2d.SceneManager = Backbone.Model.extend({
 });
 
 //end of scene manager
-
-////////////////////////
-///util
-
-Pig2d.util = {
-
-    ///////////////
-    createDummy : function() {
-
-        return new Pig2d.node({
-            model:new Pig2d.model()
-        });
-
-    },
-    //////////////////
-    //캔버스 기반의 스프라이트 생성
-    createSlicedImage : function(param) {
-
-        var model = new Pig2d.model();
-        var element = model.get('element');
-
-        var cutx = param.cutx || 0;
-        var cuty = param.cuty || 0;
-        var basex = param.basex || 0;
-        var basey = param.basey || 0;
-
-        var canvas	= document.createElement( 'canvas' );
-
-        model.set('sheet',canvas);
-
-        canvas.width	= param.width || param.imgObj.width;
-        canvas.height	= param.height || param.imgObj.height;
-
-        canvas.style.position = 'absolute';
-        //canvas.style.left =  basex + 'px';
-        //canvas.style.top = basey + 'px';
-
-        canvas.style.WebkitTransform = 'translate(' + basex +'px,' + basey + 'px)';
-
-        element.appendChild(canvas);
-
-        var ctx		= canvas.getContext('2d');
-        ctx.drawImage(param.imgObj,cutx,cuty,canvas.width,canvas.height,0,0,canvas.width,canvas.height);
-
-        var node = new Pig2d.node();
-        node.set({model : model});
-
-        return node;
-    },
-    ////////////////
-    /*
-    인자 리스트
-    startFrame
-    endFrame
-    animation
-    texture
-     */
-    createSprite : function(param) {
-
-
-        var startFrame = param.startFrame || 0;
-        var endFrame = param.endFrame || (param.animation.frames.length-1);
-
-        //노드생성
-        var node = new Pig2d.node();
-
-        var model;
-        if(param.canvas_size) {
-            model =  new Pig2d.SpriteModel.fixedCanvas( {
-                    data : param.animation,
-                    imgObj : param.texture,
-                    canvas_size : param.canvas_size
-                }
-            );
-
-        }
-        else {
-            model =  new Pig2d.SpriteModel( {
-                    data : param.animation,
-                    imgObj : param.texture
-                }
-            );
-
-        }
-
-
-        node.set(
-            { model : model }
-        );
-
-        node.get('model').setupAnimation({
-            startFrame:startFrame,
-            endFrame:endFrame
-        });
-
-        return node;
-
-    },
-    //////////////////
-    createImage : function(param) {
-        //노드생성
-
-        var node = new Pig2d.node(
-            {
-                model : new Pig2d.model()
-            }
-        );
-
-        console.log('create image');
-
-        if(param.center) {
-
-            var element = document.createElement('div');
-
-            element.style.backgroundImage = 'url('+ param.texture +')';
-            element.style.width = param.texture_size.width + 'px';
-            element.style.height = param.texture_size.height + 'px';
-
-            var cssval = 'translate('+ -param.center.x +'px,' + -param.center.y + 'px)'
-            element.style.WebkitTransform = cssval ;
-
-            node.get('model').get('element').appendChild(element);
-
-        }
-        else {
-            node.get('model').setTexture(param);
-        }
-
-
-        return node;
-
-    },
-    //////////////////////////////
-    SetupAsset : function(param) {
-
-        var asset_path = param.asset_path;
-        var img_files = param.img_files;
-        var animation_files = param.animation_files;
-        var OnLoadComplete = param.OnLoadComplete;
-        var OnLoadProgress = param.OnLoadProgress;
-        var textures = {};
-        var animations = {};
-        var i=0;
-
-
-        function preLoadAnimation(filename,data) {
-
-            if(data) {
-                //console.log(filename);
-                animations[filename] = data;
-            }
-
-            if(animation_files.length <= i) {
-
-                var result = {};
-                result.textures = textures;
-                result.animations = animations;
-                if(OnLoadComplete != undefined)
-                    OnLoadComplete(result);
-
-            }
-            else {
-                var url = asset_path + animation_files[i];
-                var file_name = animation_files[i];
-                i++;
-                $.ajax({
-                    type : "GET",
-                    url : url,
-                    dataType : "json",
-                    success : preLoadAnimation.bind(this,file_name),
-                    error : function(evt,status,xhr) {
-
-                        console.log(status);
-
-                    }
-                });
-            }
-
-        }
-
-
-        (function preLoadImg() {
-
-            var imgObj = new Image();
-            imgObj.onload = function() {
-
-                var evt = {};
-                textures[img_files[i]] = imgObj;
-
-                evt.percent = (i/img_files.length) * 100;
-                evt.currentIndex = i;
-
-                if(OnLoadProgress != undefined)
-                    OnLoadProgress(evt);
-
-                i++;
-
-                if(i < img_files.length) {
-                    preLoadImg(); //다음 이미지 로딩
-                }
-                else {
-
-                    if(animation_files) {
-                        i=0;
-                        preLoadAnimation();
-                    }
-                    else {
-                        var result = {};
-                        result.textures = textures;
-                        if(OnLoadComplete != undefined)
-                            OnLoadComplete(result);
-
-                    }
-
-
-                }
-
-            }
-
-            imgObj.src =  asset_path + img_files[i];
-
-
-        })();
-    },
-
-
-    ///테스트용 컨트롤러
-    setup_pig2dTestController : function (listener_element,node) {
-        function callbackControl(movementX,movementY) {
-
-            node.get('model').rotate(movementX);
-            node.get('model').translate(movementY,new gbox3d.core.Vect2d(0,1));
-//                Smgr.updateAll();
-        }
-
-
-        //이벤트처리
-        listener_element.addEventListener( 'mousedown', onDocumentMouseDown, false );
-        listener_element.addEventListener( 'touchstart', onDocumentTouchStart, false );
-        listener_element.addEventListener( 'touchmove', onDocumentTouchMove, false );
-
-
-        function onDocumentMouseDown( event ) {
-
-            event.preventDefault();
-
-            listener_element.addEventListener( 'mousemove', onDocumentMouseMove, false );
-            listener_element.addEventListener( 'mouseup', onDocumentMouseUp, false );
-
-        }
-
-        function onDocumentMouseMove( event ) {
-
-            var movementX = event.movementX || event.mozMovementX || event.webkitMovementX || 0;
-            var movementY = event.movementY || event.mozMovementY || event.webkitMovementY || 0;
-
-            callbackControl(movementX,-movementY);
-
-        }
-
-        function onDocumentMouseUp( event ) {
-
-            listener_element.removeEventListener( 'mousemove', onDocumentMouseMove );
-            listener_element.removeEventListener( 'mouseup', onDocumentMouseUp );
-
-        }
-
-        //터치 디바이스
-        var touchX,  touchY;
-
-        function onDocumentTouchStart( event ) {
-
-            event.preventDefault();
-
-            var touch = event.touches[ 0 ];
-
-            touchX = touch.screenX;
-            touchY = touch.screenY;
-
-        }
-
-        function onDocumentTouchMove( event ) {
-
-            event.preventDefault();
-
-            var touch = event.touches[ 0 ];
-
-            var movementX =  (touchX - touch.screenX);
-            var movementY =  (touchY - touch.screenY);
-            touchX = touch.screenX;
-            touchY = touch.screenY;
-
-            callbackControl(movementX,movementY);
-        }
-
-    }// end of setup_pig2dTestController
-
-
-
-
-
-}
 
 
 

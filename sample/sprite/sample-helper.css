@@ -1,0 +1,13 @@
+#pig2d-320240-screen {
+    position: relative;
+    width : inherit;
+    height :240px; /* 높이를 명시해주어야 영역이 잡혀 유아이가 밑으로 내려감.*/
+    margin-top: 3px;
+    background-color: #bf62ff/*배경색을 정해준다.*/
+}
+#pig2d-320240-screen .helper-grid {
+    position: absolute; /*공간을 차지 하지않도록함*/
+    width : inherit;
+    height :240px;
+    border: 1px solid;
+}

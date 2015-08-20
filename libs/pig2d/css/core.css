@@ -33,8 +33,6 @@ root {
 .pig2d-node {
     position: absolute;
     margin: 0px;
-    width : 0px;
-    height : 0px;
     -webkit-transform-origin : 0% 0%;
 
 }
