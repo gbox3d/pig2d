@@ -11,7 +11,7 @@
  *
  */
 
-var gbox3d = {
+this.gbox3d = {
 	core : {}
 	
 };
