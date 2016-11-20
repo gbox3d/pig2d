@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title> window mode sample </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+
+    <!-- cdn base url  https://gbox3d.github.io/pig2d -->
+
+    <link href="https://gbox3d.github.io/pig2d/libs/pig2d/css/core.css" rel="stylesheet" />
+
+    <!--jquery-->
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/async/2.1.2/async.min.js"></script>
+
+    <!--backbone-->
+    <script src="https://gbox3d.github.io/pig2d/libs/backbone/underscore-min.js"></script>
+    <script src="https://gbox3d.github.io/pig2d/libs/backbone/backbone-min.js"></script>
+
+    <!--pig2d-->
+    <script src="https://gbox3d.github.io/pig2d/libs/pig2d/js/core.js"></script>
+    <script src="https://gbox3d.github.io/pig2d/libs/pig2d/js/node2d.js"></script>
+
+    <script src="https://gbox3d.github.io/pig2d/libs/pig2d/js/system.js"></script>
+    <script src="https://gbox3d.github.io/pig2d/libs/pig2d/js/util.js"></script>
+
+</head>
+
+<body>
+<div id='main-screen' style="
+            width: 320px;
+            height :240px; /* 높이를 명시해주어야 영역이 잡혀 유아이가 밑으로 내려감.*/
+            margin-top: 3px;
+            background-color: #bf62ff/*배경색을 정해준다.*/
+            ">
+
+    <div style="position:absolute;width: 320px;height: 24px; color: white" id='text-framerate-info'>frame rate</div>
+
+    <svg class='helper-grid' style="position: absolute;width : 320px;height :240px;" >
+
+        <line x1="0" y1="120" x2="320" y2="120" style="stroke:#000000;"/>
+        <line x1="160" y1="0" x2="160" y2="240" style="stroke:#000000;"/>
+
+    </svg>
+
+</div>
+
+<div id="ui-pannel" style="width: 320px;height: 120px;background-color: #dcdcdc;">
+    <div class='fire1' style="margin-top :30px; margin-left: 30px; display: inline-block; width: 60px;height: 60px; background-color: #ff0000"></div>
+    <div class='fire2' style="margin-left: 30px;display: inline-block;width: 60px;height: 60px; background-color: #00ff00"></div>
+    <div class='fire3' style="margin-left: 30px;display: inline-block;width: 60px;height: 60px; background-color: #0000ff"></div>
+</div>
+
+<script>
+
+    var theApp = {}
+
+    async .waterfall([
+        (next)=> {
+            Pig2d.util.SetupAsset({
+                asset_path : "../../res/",
+                img_files : [
+                    "av8_harrier.png"
+                ],
+                OnLoadComplete : (evt)=> {
+                    next(null,evt)
+                }
+
+            });
+
+        },
+        (evt,next)=> {
+            let textures = evt.textures;
+
+            //씬메니져 생성하기
+            let Smgr = new Pig2d.SceneManager({
+                container : document.querySelector('#main-screen')
+                ,window_size : { //클리핑 범위 지정
+                    width : 320,
+                    height: 240
+                }
+            });
+
+            //스프라이트 노드 만들기
+            let node = Pig2d.util.createSlicedImage({
+                imgObj : textures['av8_harrier.png'],
+                basex : -textures['av8_harrier.png'].width/2,
+                basey : -textures['av8_harrier.png'].height/2
+            });
+
+            node.get('model').setPosition(160,120);
+            node.get('model').setScale(0.5,0.5);
+
+            //씬메니져 등록하기
+            Smgr.add(node);
+
+            theApp.Smgr = Smgr;
+
+            next();
+
+        }
+    ], (err, result) =>{
+        //게임루프시작
+        Pig2d.system.startGameLoop({
+
+            framerate_info_element : document.querySelector("#text-framerate-info"),
+            gameLoopCallBack : function(deltaTime) {
+
+                //씬메니져 업데이트
+                //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+                theApp.Smgr.updateAll(deltaTime);
+
+            },
+            loopCount_limit : 30
+        });
+
+    })
+
+
+
+
+
+</script>
+
+
+
+</body>
+</html>
