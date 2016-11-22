@@ -27,15 +27,17 @@ CDN 버전
 ```html
 <link href="http://gbox3d.github.io/pig2d/libs/pig2d/css/core.css" rel="stylesheet"></link>
 
-<script src="http://code.jquery.com/jquery-latest.js"></script>
+<script src="https://code.jquery.com/jquery-latest.js"></script>
 
     
-<script src="http://gbox3d.github.io/pig2d/libs/backbone/underscore-min.js"></script>
-<script src="http://gbox3d.github.io/pig2d/libs/backbone/backbone-min.js"></script>
+<script src="https://gbox3d.github.io/pig2d/libs/backbone/underscore-min.js"></script>
+<script src="https://gbox3d.github.io/pig2d/libs/backbone/backbone-min.js"></script>
 
-<script src="http://gbox3d.github.io/pig2d/libs/pig2d/js/core.js"></script>
-<script src="http://gbox3d.github.io/pig2d/libs/pig2d/js/node2d.js"></script>
+            
+<script src="https://gbox3d.github.io/pig2d/libs/pig2d/js/core.js"></script>
+<script src="https://gbox3d.github.io/pig2d/libs/pig2d/js/node2d.js"></script>
 
+             
 ```
 
 기본 예제
