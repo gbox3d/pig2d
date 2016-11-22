@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf8" >
+    <title> 쉿터 예제 </title>
+
+    <!--
+    스크롤 적용버전
+    -->
+
+    <script src="../../libs/kinetic-v4.5.2.js"></script>
+    <script src="../../libs/jquery-1.9.1.min.js"></script>
+    <script src="../../libs/pig2d/js/core.js"></script>
+
+    <script src="../../libs/gbox3d/ext.kinetic.js"></script>
+    <script src="../../libs/gbox3d/kinetic.util.js"></script>
+
+
+    <script>
+
+
+
+        function getCollisionArea(node) {
+
+
+            //console.log(node.css('width').slice(0,-2));
+            //console.log(node.css('height').slice(0,-2));
+
+            var width =  parseInt( node.css('width').slice(0,-2));
+            var height = parseInt (node.css('height').slice(0,-2));
+
+            //console.log(node.css('-webkit-transform'));
+
+            var sx,sy
+            var strmat = node.css('-webkit-transform');
+            if(strmat == 'none') {
+                sx = 0;
+                sy = 0;
+
+            }
+            else {
+
+                strmat = strmat.slice(0,-1);
+                strmat = strmat.slice(7,strmat.length);
+
+                var temp = strmat.split(',');
+
+                sx = parseInt( temp[4]);
+                sy = parseInt( temp[5] );
+
+                //console.log(strmat);
+            }
+
+            //console.log(sx+','+sy);
+
+            return new gbox3d.core.Box2d({
+
+                topleft :  new gbox3d.core.Vect2d(sx,sy),
+                bottomright: new gbox3d.core.Vect2d(sx+width,sy+height)
+
+            });
+
+        }
+
+
+        //시작 ...
+        $(function() {
+
+            var stage = new Kinetic.Stage({
+                container : "kinetic_stage",
+                width : 320,
+                height : 240
+            });
+
+            var layer = new Kinetic.Layer({
+                name : 'root_layer'
+            });
+
+            //스테이지 붙이기
+            stage.add(layer);
+
+
+            var test = new gbox3d.Kinetic.Util.Sheeter({
+                layer : layer,
+                rgnInfo : {
+                    start:new gbox3d.core.Vect2d(0,0),
+                    end : new gbox3d.core.Vect2d(100,100)
+                },
+                current_node : $('#test-sprite')
+
+            });
+
+
+            $('#kinetic_stage').on('click',function(evt) {
+
+                console.log('test');
+
+                var box_info = getCollisionArea($('#test-sprite'));
+
+
+
+                if(box_info.ptInBox( evt.offsetX, evt.offsetY)) {
+
+                    console.log('hit');
+
+                    test.setRect({
+                        start : new gbox3d.core.Vect2d(0,0),
+                        end : new gbox3d.core.Vect2d(100,200)
+                    });
+
+                    test.setPosition(100,100);
+
+                    test.show();
+                    test.setCurrentNode('#test-sprite');
+
+
+                }
+
+            });
+
+        });
+
+    </script>
+
+
+</head>
+<body >
+
+<h1> Editor </h1>
+
+<div id="main_window" style="position: relative">
+
+    <div id="test-sprite" style="position: absolute;width: 100px;height: 100px;background-color: #ff0000;" >
+
+    </div>
+    <div id="kinetic_stage" style="position: absolute;border: 1px solid;" ></div>
+
+
+</div>
+
+</body>
+</html>

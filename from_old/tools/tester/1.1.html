@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title>  </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+    <script src="../../libs/extra/d3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <script src="../../libs/backbone/backbone.js"></script>
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+
+    <script src="../../libs/pig2d/js/controller.js"></script>
+    <script src="../../libs/pig2d/js/scroller.js"></script>
+    <script src="../../libs/pig2d/js/particle.js"></script>
+    <script src="../../libs/pig2d/js/system.js"></script>
+
+
+</head>
+
+<body style="margin: 0px;" >
+
+<div style="overflow: auto;">
+
+    <div id="page-start" style="
+    height: 240px;
+    border: 1px solid;
+    display: -webkit-box;
+				-webkit-box-orient: horizontal;
+				-webkit-box-pack: center; /* 수평 정렬기준  */
+				-webkit-box-align: center;
+" >
+
+        <p id="text-loading-progress" >loading...</p>
+
+    </div>
+
+    <div id="main-window" style="width: 320px;height: 240px;display: none">
+        <p id ='text-framerate-info' style="position: absolute;z-index: 5;" ></p>
+        <p id ='text-system-info' style="position: absolute;-webkit-transform:translate(0px,20px); z-index: 5;" ></p>
+    </div>
+
+    <button id="btn-test1" >test1</button>
+    <p id='text-log'></p>
+
+</div>
+
+<script>
+
+    var page_start = document.getElementById('page-start');
+    var text_load_progress = document.getElementById('text-loading-progress');
+    var page_game_play = document.getElementById('main-window');
+
+    var theApp = {};
+    theApp.Smgr = new Pig2d.SceneManager({
+        container :  document.querySelector('#main-window'),
+        window_size : { //클리핑 범위 지정
+            width : 320,
+            height: 240
+        },
+        bkg_color: '#aaaaaa'
+    });
+
+    theApp.profile = {
+        ani_canvas_total : 0,
+        active_texture_total : 0
+    };
+
+    var framerate_info_element = document.querySelector('#text-framerate-info');
+    var text_log_element = document.querySelector('#text-log');
+
+    theApp.getAssetDataInfo = function (name) {
+
+        var object_info = this.assetData.objects[name];
+
+        return {
+            texture : this.resData.textures[this.assetData.img_files[object_info.texture]],
+            animation : this.resData.animations[this.assetData.animation_files[object_info.animation]]
+        }
+
+    }
+
+    var objtest_index = ['unit_0','unit_1','unit_2','unit_3','unit_4','unit_7','unit_8','unit_9','unit_11','unit_13','unit_14'];
+    var objtest_count = 0;
+
+    //프레임을 표시하기위해서 필요한 캔버스 최대 크기를 구한다.
+    function calcMaxCanvasSize(animations) {
+
+        function getCanvasSize(animation) {
+
+            var maxw=0,maxh=0;
+            for(var i=0;i< animation.frames.length;i++) {
+
+                var width = animation.frames[i].sheets[0].width;
+                var height = animation.frames[i].sheets[0].height;
+
+                if(maxw < width ) {
+                    maxw = width
+                }
+
+                if(maxh < height ) {
+                    maxh = height
+                }
+            }
+
+            animation.canvas_size = {
+                width : maxw,
+                height : maxh
+            };
+        }
+
+        for(var key in animations) {
+            getCanvasSize(animations[key]);
+        }
+    }
+
+
+    $.ajax({
+        type : "GET",
+        url : "test.json",
+        dataType : "json",
+        success : function(data,status,xhr) {
+
+            theApp.assetData = data;
+            theApp.assetData.OnLoadComplete = function(res_data) {
+
+                console.log(res_data);
+                page_start.style.display = 'none';
+                page_game_play.style.display = 'block';
+
+                theApp.resData = res_data;
+
+                calcMaxCanvasSize(res_data.animations);
+
+                document.querySelector('#btn-test1').addEventListener('click',function() {
+
+
+                    var asset_info = theApp.getAssetDataInfo(objtest_index[objtest_count++]);
+
+                    objtest_count %= 10;
+
+
+
+                    var node_sprite = Pig2d.util.createSprite(
+                            {
+                                texture :asset_info.texture,
+                                animation : asset_info.animation,
+                                canvas_size : asset_info.animation.canvas_size
+                            }
+                    );
+
+                    var scaler = 0.5;
+                    theApp.profile.ani_canvas_total += ((asset_info.animation.canvas_size.width * asset_info.animation.canvas_size.height ) * scaler);
+                    theApp.profile.active_texture_total += (asset_info.texture.width * asset_info.texture.height );
+
+                    text_log_element.innerText = objtest_count + ',' + (theApp.profile.ani_canvas_total + theApp.profile.active_texture_total) +',' + theApp.profile.ani_canvas_total;
+
+                    node_sprite.get('model').set('scaler',scaler);
+                    node_sprite.get('model').setPosition(160,120);
+
+                    //인자들은 기본값은으로 세팅
+                    node_sprite.get('model').setupAnimation();
+
+                    theApp.Smgr.add(node_sprite);
+                    node_sprite.update(true,0);
+
+
+                });
+
+
+            };
+            theApp.assetData.OnLoadProgress = function(evt) {
+
+                //console.log(evt);
+
+                //text_load_progress.innerText = '';
+                text_load_progress.style.backgroundColor = 'red';
+                text_load_progress.style.width = evt.percent + 'px';
+                text_load_progress.style.height = '32px';
+
+            };
+
+            Pig2d.system.LoadAsset(
+                    theApp.assetData
+            );
+
+
+        },
+        error : function(evt,status,xhr) {
+
+            console.log(status);
+
+        }
+    });
+
+    //게임루프시작
+    Pig2d.system.startGameLoop({
+
+        framerate_info_element : framerate_info_element,
+        gameLoopCallBack : function(deltaTime) {
+
+            //씬메니져 업데이트
+            //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+            theApp.Smgr.updateAll(deltaTime);
+
+        },
+        loopCount_limit : 30
+    });
+</script>
+
+
+
+</body>
+</html>

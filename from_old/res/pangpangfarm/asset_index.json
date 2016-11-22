@@ -1,0 +1,28 @@
+{
+    "asset_path" : "../../res/pangpangfarm/",
+    "img_files" : [
+        "appcenter.png",
+        "back/main.png",
+        "back/fence.png",
+        "back/grass.png",
+        "back/house2.png",
+        "back/pig_hide.png",
+        "back/cow_hide.png",
+        "back/sheep_hide.png"
+    ],
+    "animation_files" : [
+
+
+    ],
+    "objects" : {
+        "appcenter":{"texture":0},
+        "main_back":{"texture":1},
+        "fence":{"texture":2},
+        "grass":{"texture":3},
+        "house":{"texture":4},
+        "pig_hide":{"texture":5},
+        "cow_hide":{"texture":6},
+        "sheep_hide":{"texture":7}
+
+    }
+}

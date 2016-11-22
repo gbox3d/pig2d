@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title> mouse spot control </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <script src="../../libs/backbone/backbone.js"></script>
+
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <!--<script src="../../libs/gl-matrix-min.js"></script>-->
+
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+
+    <script src="../../libs/pig2d/js/controller.js"></script>
+    <script src="../../libs/pig2d/js/system.js"></script>
+
+
+</head>
+
+<body>
+
+<div class="pig2d-fullscreen" >
+    <p id ='text-framerate-info' style="position: absolute;z-index: 5;" >frame rate</p>
+</div>
+
+<script>
+
+
+
+    function OnLoadComplete(evt) {
+
+        //씬메니져 생성하기
+        var Smgr = null;
+
+        var textures = evt.textures;
+        var animations = evt.animations;
+
+        Smgr = new Pig2d.SceneManager({
+            container :  document.querySelector('.pig2d-fullscreen')
+        });
+
+
+        ///////////////////////////////////////////////////////////////
+        //캐릭터 세팅
+
+        function InitCharacter() {
+            var node = Pig2d.util.createDummy();
+
+            var node_sprite = Pig2d.util.createSprite({
+                texture: textures['FF_Guy.png'],
+                animation : animations['ffguy.json']
+
+            });
+            node_sprite.get('model').setupAnimation({
+                startFrame: 0,
+                endFrame : 0,
+                isAnimationLoop : true,
+                AnimationStatus : 'stop'
+
+            });
+
+            node.add(node_sprite);
+            node.get('model').setPosition(160,220);
+
+            node.get('model').setupTransition({
+                TransitionEndCallBack : function() {
+                }
+            });
+
+            //1-12 걷기
+            //0 대기
+            //13-15 공격
+            //25-27
+            //컨트롤러 설정
+            var mycontroler = new Pig2d.util.controller.MouseSpot({
+                listener_element : document,
+                node : node,
+                speed : 100,
+                setupCallBack : function() {
+
+                    node_sprite.get('model').setupAnimation({
+                        startFrame: 0,
+                        endFrame : 0,
+                        isAnimationLoop : true,
+                        AnimationStatus : 'stop'
+                    });
+
+                },
+                endCallBack : function() { //이동이 완료 되면...
+
+                    node_sprite.get('model').setFrame(0);
+                    node_sprite.get('model').set('AnimationStatus','stop');
+
+                },
+                startCallBack : function(evt) { //새로운 이동 포인터가 입력되면...
+                    node_sprite.get('model').setupAnimation({
+                        startFrame: 1,
+                        endFrame : 12,
+                        isAnimationLoop : true,
+                        AnimationStatus : 'play'
+                    });
+
+                    //왼쪽으로 움직이면 반전 시키기
+                    if(evt.direction_vector.X < 0) {
+                        node_sprite.get('model').set('flipY',true);
+                    }
+                    else {
+                        node_sprite.get('model').set('flipY',false);
+
+                    }
+                }
+            });
+
+            return {
+                root_node  : node,
+                sprite_node : node_sprite
+            }
+        }
+
+        var charObj = InitCharacter();
+
+        Smgr.add(charObj.root_node);
+
+
+        //게임루프시작
+        Pig2d.system.startGameLoop({
+
+            framerate_info_element : document.querySelector("#text-framerate-info"),
+            gameLoopCallBack : function(deltaTime) {
+
+                //씬메니져 업데이트
+                //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+                Smgr.updateAll(deltaTime);
+
+            },
+            loopCount_limit : 30
+        });
+
+
+    }
+
+
+    Pig2d.util.SetupAsset({
+        asset_path : "../../res/ffight/",
+        img_files : [
+            "FF_Guy.png",
+            "Slum1-1.png",
+            "Slum1-2.png",
+            "Slum2.png"
+        ],
+        animation_files : [
+            "ffguy.json"
+        ],
+        OnLoadComplete : OnLoadComplete
+
+    });
+
+
+
+</script>
+
+
+
+</body>
+</html>

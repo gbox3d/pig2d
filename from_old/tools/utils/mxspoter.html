@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title> mx spoter </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <script src="../../libs/backbone/backbone.js"></script>
+
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <!--<script src="../../libs/gl-matrix-min.js"></script>-->
+
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+
+    <script src="../../libs/pig2d/js/controller.js"></script>
+
+
+</head>
+
+<body>
+
+
+<div style="margin :auto;margin-top: 5px; height: 240px;width: 320px; border: 1px solid;" >
+    <input type="file" id="inp_select-files" name="files[]" multiple />
+    <p id="info-text"></p>
+
+</div>
+
+<div id="image-window" style="width: 320px;height: 240px; border: 1px solid;" >
+    <p id ='text-framerate-info' style="position: absolute;z-index: 5;" >frame rate</p>
+</div>
+
+<script>
+
+
+    var App = {};
+
+    App.Smgr = new Pig2d.SceneManager({
+        container :  document.querySelector('#image-window')
+        ,window_size : { //클리핑 범위 지정
+            width : 320,
+            height: 240
+        }
+    });
+
+    App.drag = {}
+    App.drag.dragstart = new gbox3d.core.Vect2d();
+    App.drag.dragOn = false;
+    App.imgNode = null;
+
+    //컨트롤러
+    App.controller = new Pig2d.util.controller.Drager({
+        listener_element:document.querySelector('#image-window')
+    });
+
+
+
+    document.querySelector('#image-window').addEventListener('mousemove',function(evt) {
+
+        if(App.imgNode) {
+            var scroll_pos = App.imgNode.get('model').getPosition();
+            document.querySelector('#info-text').innerText = (evt.layerX - scroll_pos.X) + ',' + (evt.layerY - scroll_pos.Y);
+
+        }
+    });
+
+    document.querySelector('#inp_select-files').addEventListener('change',function(evt) {
+
+        var file = evt.target.files[0];
+
+        var i=0;
+
+        var total_width = 0;
+        var max_height = 0;
+
+        var reader = new FileReader();
+
+        reader.onload = function(e) {
+
+
+            var imgObj = new Image();
+            var result = e.target.result;
+
+            imgObj.onload = function() {
+
+                var node = Pig2d.util.createSlicedImage({
+                    imgObj: imgObj
+                });
+
+                App.Smgr.add(node);
+
+                App.imgNode = node;
+
+                App.controller.setControlNode(App.imgNode);
+
+
+
+            }
+            imgObj.src = result;
+
+        }
+
+        reader.readAsDataURL(file);
+    });
+
+    //타이머 설정 및 퍼포먼트 테스트용 정보
+    var mytimer = new gbox3d.core.Timer();
+    var framerate_info = document.querySelector("#text-framerate-info");
+    var frame_total = 0;
+    var loop_count = 0;
+
+    //게임 루프
+    requestAnimationFrame( function loop() {
+
+        var deltaTime = mytimer.getDeltaTime();
+
+        if(deltaTime != 0 )
+            frame_total += Math.round(1.0 / deltaTime);
+
+        loop_count++;
+
+        framerate_info.innerText = Math.round(frame_total / loop_count) + '/' + loop_count;
+
+
+        //씬메니져 업데이트
+        //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+        App.Smgr.updateAll(deltaTime);
+
+        requestAnimationFrame(loop);
+
+    });
+
+</script>
+
+
+
+</body>
+</html>

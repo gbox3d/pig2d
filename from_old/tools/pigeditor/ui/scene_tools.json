@@ -1,0 +1,11 @@
+{
+    "add_dummy" : "theApp.addDummyNode({x:0,y:0,name:'dummy_node'});",
+    "add_htmlnode" : "theApp.addCustomHtmlNode({x:0,y:0,name:'html_node',html:'<div>html node</div>'});",
+    "makeHierarchy" : "theApp.makeHierarchy({parent : theApp.CameraNode.findByID(''),child : theApp.CurrentNode});",
+    "wait_effect" : "theApp.EffectMng.waitUnit();",
+    "kill_effect" : "theApp.EffectMng.killUnit();",
+    "appearIn_effect" : "theApp.EffectMng.appearInUnit();",
+    "dress change" : "theApp.battleSceneMng.changeUnitDress(theApp.CurrentNode,'mushroom');",
+    "add shadow" : "theApp.EffectMng.addShadowEffect(theApp.CurrentNode);"
+
+}

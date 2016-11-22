@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>view tools</title>
+
+    <meta charset="utf8" >
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <style>
+        #filelist-view ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            width: 100%;
+            text-align: left;
+        }
+
+        #filelist-view li {
+            padding: 0 10px;
+            height: 40px;
+            line-height: 40px;
+            border-bottom: 1px solid #ccc;
+            border-top: 1px solid #fff;
+            background-color: #fafafa;
+            font-size: 14px;
+        }
+    </style>
+
+    <script src="../../libs/jquery-1.9.1.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <script src="../../libs/backbone/json2.js"></script>
+    <script src="../../libs/backbone/backbone.js"></script>
+
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <script src="../../libs/gl-matrix.js"></script>
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+
+
+    <script>
+
+        App = {
+
+        };
+
+        App.ViewTool = {
+
+        };
+
+        $(function() {
+
+
+            var rootNode = new Pig2d.node(
+                    {
+                        el : $('<div></div>'),
+                        model : new Pig2d.model(),
+                        name : 'sceneroot'
+                    }
+            );
+            rootNode.show(true).get('model').setPosition(0,0);
+            $('.content #sprite_view').append(rootNode.get('el'));
+
+            //data = JSON.parse('{"name":"","frames":[{"sheets":[{"x":117,"y":43,"width":95,"height":137,"centerOffset":{"x":0,"y":0},"bp_x":-99,"bp_y":-7,"texture":"../../res/Genjuro.gif"}]},{"sheets":[{"x":117,"y":43,"width":95,"height":137,"centerOffset":{"x":0,"y":0},"bp_x":-190,"bp_y":-7,"texture":"../../res/Genjuro.gif"}]}]}');
+
+
+
+            $('.btn-file-load').on('click',function(){
+
+                $('#sceneroot').empty();
+                //파일 상세값 불러오기
+                $.ajax(
+                        {
+                            url: 'http://1.234.2.201:9304/loadFileDetail',
+                            //url: 'http://localhost:9304/loadFileDetail',
+                            type: 'GET',
+                            jsonp: 'callback',
+                            jsonpCallback: 'callback',
+                            dataType: 'jsonp',
+                            data: {
+                                id : $('.sprit-id').val(),
+                                title: $('.file-id').val()
+                            },
+                            success: function(data, textStatus, jqXHR) {
+
+                                console.log(data);
+
+                                App.ViewTool.SpriteData = JSON.parse(data);
+
+                                //노드생성
+                                var node = new Pig2d.node(
+                                        {
+                                            el : $('.pig2d-templet .pig2d-sprite-templ ').clone(),
+                                            model : new Pig2d.SpriteModel( {
+                                                        data : App.ViewTool.SpriteData,
+                                                        editor_info : {
+                                                            width : 320,
+                                                            height : 240
+                                                        }
+                                                    }
+                                            )
+                                        }
+                                );
+
+                                node.show(true).get('model').setPosition(160,120);
+//                            node.setMatrial({
+//                                texture : App.ViewTool.SpriteData.frames[0]
+//                            });
+
+                                rootNode.add(node);
+
+                                rootNode.update(true);
+
+
+                                App.ViewTool.node_sprite = node;
+                                console.log(App.ViewTool.node_sprite);
+
+                            },
+                            error: function(jqXHR, textStatus) {
+                                console.log(textStatus);
+                            },
+                            complete: function(jqXHR, textStatus, errorThrown) {
+                                console.log('complete');
+                            }
+                        }
+                );
+
+            });
+
+
+
+            $('.btn-list-load').on('click',function(){
+
+                $('#filelist-view ul').empty();
+                //파일 목록 불러오기
+                $.ajax(
+                        {
+                            //url: 'http://localhost:9304/loadFileList',
+                            url: 'http://1.234.2.201:9304/loadFileList',
+                            type: 'GET',
+                            jsonp: 'callback',
+                            jsonpCallback: 'callback',
+                            dataType: 'jsonp',
+                            data: {
+                                id : $('.sprit-id').val()
+                            },
+                            success: function(data, textStatus, jqXHR) {
+
+                                $.each(data.item,function(index, item){
+                                    $('<li></li>').text(item.title).appendTo($('#filelist-view ul'));
+                                    //$('<li></li>').attr('class','titlename').text(item.title).appendTo($('#filelist-view ul'));
+                                });
+                            },
+                            error: function(jqXHR, textStatus) {
+                                console.log(textStatus);
+                            },
+                            complete: function(jqXHR, textStatus, errorThrown) {
+                                console.log('complete');
+                            }
+                        }
+                );
+
+            });
+
+
+
+
+            $('#filelist-view ul').on('click',function(evt){
+
+                $('#sceneroot').empty();
+                //파일 상세값 불러오기
+                $.ajax(
+                        {
+                            url: 'http://1.234.2.201:9304/loadFileDetail',
+                            //url: 'http://localhost:9304/loadFileDetail',
+                            type: 'GET',
+                            jsonp: 'callback',
+                            jsonpCallback: 'callback',
+                            dataType: 'jsonp',
+                            data: {
+                                id : $('.sprit-id').val(),
+                                title: $(evt.target).text()
+                            },
+                            success: function(data, textStatus, jqXHR) {
+
+                                console.log(data);
+
+                                App.ViewTool.SpriteData = JSON.parse(data);
+
+                                //노드생성
+                                var node = new Pig2d.node(
+                                        {
+                                            el : $('.pig2d-templet .pig2d-sprite-templ ').clone(),
+                                            model : new Pig2d.SpriteModel( {
+                                                        data : App.ViewTool.SpriteData,
+                                                        editor_info : {
+                                                            width : 320,
+                                                            height : 240
+                                                        }
+                                                    }
+                                            )
+                                        }
+                                );
+
+                                node.show(true).get('model').setPosition(160,120);
+                                rootNode.add(node);
+                                rootNode.update(true);
+
+                                App.ViewTool.node_sprite = node;
+                                console.log(App.ViewTool.node_sprite);
+
+                            },
+                            error: function(jqXHR, textStatus) {
+                                console.log(textStatus);
+                            },
+                            complete: function(jqXHR, textStatus, errorThrown) {
+                                console.log('complete');
+                            }
+                        }
+                );
+
+
+            });
+
+        });
+
+    </script>
+
+
+</head>
+<body >
+
+<div class="page" style="width: 320px; margin: auto">
+
+    <div class="header" style="margin-bottom: 30px;" >
+
+        <p id="text-info" > hello </p>
+        <input class='sprit-id' value="gbox3d" />
+        <button class="btn-list-load" >List Load</button></br>
+        <input class='file-id' value="test.json" />
+        <button class="btn-file-load" >file Load</button>
+
+        <div style="height:20px"></div>
+
+        <div id="filelist-view" style="height: 240px; border: 1px solid;">
+            <ul>
+            </ul>
+        </div>
+
+    </div>
+
+    <div class="content">
+
+        <svg style="position: absolute;" >
+
+            <line x1="0" y1="120" x2="320" y2="120" style="stroke:#000000;"/>
+            <line x1="160" y1="0" x2="160" y2="240" style="stroke:#000000;"/>
+
+        </svg>
+
+        <div id="sprite_view" style="height: 240px; border: 1px solid;">
+
+
+        </div>
+
+    </div>
+
+    <div class="footer" ></div>
+
+</div>
+
+
+<div class='pig2d-templet' style="visibility: hidden">
+
+    <div class='pig2d-sprite-templ'
+         style="
+         width: 100px;
+         height: 100px;"
+            >
+    </div>
+
+</div>
+
+</body>
+</html>

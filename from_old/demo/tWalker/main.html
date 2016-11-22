@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title> pig2d engine demo : twalker </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <script src="../../libs/backbone/backbone.js"></script>
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <script src="../../libs/pig2d/js/core.js"></script>
+
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+
+    <script src="../../libs/pig2d/js/controller.js"></script>
+    <script src="../../libs/pig2d/js/scroller.js"></script>
+    <script src="../../libs/pig2d/js/system.js"></script>
+
+
+</head>
+
+<body>
+
+<div style="width: 320px;
+    margin: auto;">
+
+    <div id="main-window" >
+        <p id ='text-framerate-info' style="position: absolute;z-index: 5;" >frame rate</p>
+    </div>
+
+
+</div>
+
+<script>
+
+    function OnLoadComplete(evt) {
+
+        //씬메니져 생성하기
+        var Smgr = null;
+
+        var textures = evt.textures;
+        var animations = evt.animations;
+
+        Smgr = new Pig2d.SceneManager({
+            container :  document.querySelector('#main-window'),
+            window_size : { //클리핑 범위 지정
+                width : 320,
+                height: 240
+            }
+        });
+
+        //파이널파이트식 스크롤러 세팅
+        //////////////////////////////////
+        var scrollobj = new Pig2d.util.scroller.type_finalfight({
+            scroll_center : 160,
+            speed : 50,
+            front_layer : textures['ffight/Slum1-1.png'],
+            back_layer : textures['ffight/Slum1-2.png'],
+            backlayer_rate : 0.6
+
+        });
+
+        //클릭 이벤트
+        document.addEventListener('mousedown',function(evt) {
+
+            //스크롤 위치 지정
+            scrollobj.setScrollPos(evt.layerX);
+
+        });
+
+        document.addEventListener('touchstart',function(event) {
+
+            event.preventDefault();
+
+            var touch = event.touches[ 0 ];
+
+            touchX = touch.screenX;
+            touchY = touch.screenY;
+
+            scrollobj.setScrollPos(touchX);
+
+        });
+
+        scrollobj.setScrollPosDirect(-64);
+        ///////////////////////////////////////////////////////////////
+
+
+        ///////////////////////////////////////////////////////////////
+        //캐릭터 세팅
+
+        function InitCharacter() {
+            var node = Pig2d.util.createDummy();
+
+            var node_sprite = Pig2d.util.createSprite({
+                texture: textures['ffight/FF_Guy.png'],
+                animation : animations['ffight/ffguy.json']
+
+            });
+            node_sprite.get('model').setupAnimation({
+                startFrame: 0,
+                endFrame : 0,
+                isAnimationLoop : true,
+                AnimationStatus : 'stop'
+
+            });
+
+            node.add(node_sprite);
+            node.get('model').setPosition(160,220);
+
+            node.get('model').setupTransition({
+                TransitionEndCallBack : function() {
+                }
+            });
+
+
+
+
+            //11-13
+            //6-10
+            //컨트롤러 설정
+            var mycontroler = new Pig2d.util.controller.MouseSpot({
+                listener_element : document,
+                node : node,
+                speed : 100,
+                scroller : scrollobj,
+                setupCallBack : function() {
+
+                    node_sprite.get('model').setupAnimation({
+                        startFrame: 0,
+                        endFrame : 0,
+                        isAnimationLoop : true,
+                        AnimationStatus : 'stop'
+                    });
+
+                },
+                endCallBack : function() { //이동이 완료 되면...
+                    node_sprite.get('model').setupAnimation({
+                        startFrame: 0,
+                        endFrame : 0,
+                        isAnimationLoop : true,
+                        AnimationStatus : 'stop'
+                    });
+
+
+                },
+                startCallBack : function(evt) { //새로운 이동 포인터가 입력되면...
+                    node_sprite.get('model').setupAnimation({
+                        startFrame: 1,
+                        endFrame : 12,
+                        isAnimationLoop : true,
+                        AnimationStatus : 'play'
+                    });
+
+                    // console.log(evt);
+
+                    //왼쪽으로 움직이면 반전 시키기
+                    if(evt.direction_vector.X < 0) {
+                        node_sprite.get('model').set('flipY',true);
+                    }
+                    else {
+                        node_sprite.get('model').set('flipY',false);
+
+                    }
+                }
+            });
+
+            return {
+                root_node  : node,
+                sprite_node : node_sprite
+            }
+        }
+
+        var charObj = InitCharacter();
+
+        scrollobj.getRoot().add(charObj.root_node);
+
+        ///////////////////////////////////////////////////////////////
+
+        Smgr.add(scrollobj.getRoot());
+
+        //게임루프시작
+        Pig2d.system.startGameLoop({
+
+            framerate_info_element : document.querySelector("#text-framerate-info"),
+            gameLoopCallBack : function(deltaTime) {
+
+                //씬메니져 업데이트
+                //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+                Smgr.updateAll(deltaTime);
+
+            },
+            loopCount_limit : 30
+        });
+
+    }
+
+
+    Pig2d.util.SetupAsset({
+        asset_path : "../../res/",
+        img_files : [
+            "ffight/FF_Guy.png",
+            "ffight/Slum1-1.png",
+            "ffight/Slum1-2.png"
+
+        ],
+        animation_files : [
+            "ffight/ffguy.json"
+        ],
+        OnLoadComplete : OnLoadComplete
+
+    });
+
+
+
+</script>
+
+
+
+</body>
+</html>

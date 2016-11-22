@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title> sprite animation </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../../libs/jquery-2.0.3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../../libs/backbone/underscore.js"></script>
+    <script src="../../../libs/backbone/backbone.js"></script>
+
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <!--<script src="../../libs/gl-matrix.js"></script>-->
+
+    <script src="../../../libs/pig2d/js/core.js"></script>
+    <script src="../../../libs/pig2d/js/node2d.js"></script>
+
+
+</head>
+
+<body>
+
+<div style="width: 320px; margin: auto;">
+
+    <p id='text-framerate-info'>frame rate</p>
+
+    <div id='sprite_window' style="position: relative;height :260px;margin-top: 3px;">
+
+        <svg style="position: absolute;height :240px;border: 1px solid;" >
+
+            <line x1="0" y1="120" x2="320" y2="120" style="stroke:#000000;"/>
+            <line x1="160" y1="0" x2="160" y2="240" style="stroke:#000000;"/>
+
+        </svg>
+
+    </div>
+    <input id="inp_animation-range" style="width: 100%" value='{ "start" : 10,"end" : 19}' /><br/>
+    <button id='btn_play'> play </button>
+</div>
+
+
+
+<script>
+
+    var dataset = {"name":"jaint_drill","frames":[{"sheets":[{"x":185,"y":182,"width":141,"height":148,"centerOffset":{"x":-71,"y":-74},"bp_x":0,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":181,"y":197,"width":149,"height":117,"centerOffset":{"x":-75,"y":-59},"bp_x":-141,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":187,"y":194,"width":137,"height":123,"centerOffset":{"x":-69,"y":-62},"bp_x":-290,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":188,"y":202,"width":135,"height":107,"centerOffset":{"x":-68,"y":-54},"bp_x":-427,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":185,"y":202,"width":142,"height":108,"centerOffset":{"x":-71,"y":-54},"bp_x":-562,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":188,"y":206,"width":136,"height":99,"centerOffset":{"x":-68,"y":-50},"bp_x":-704,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":186,"y":215,"width":139,"height":82,"centerOffset":{"x":-70,"y":-41},"bp_x":-840,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":186,"y":202,"width":140,"height":107,"centerOffset":{"x":-70,"y":-54},"bp_x":-979,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":185,"y":188,"width":142,"height":136,"centerOffset":{"x":-71,"y":-68},"bp_x":-1119,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":186,"y":182,"width":140,"height":148,"centerOffset":{"x":-70,"y":-74},"bp_x":-1261,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":186,"y":182,"width":140,"height":148,"centerOffset":{"x":-70,"y":-74},"bp_x":-1401,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":186,"y":182,"width":140,"height":148,"centerOffset":{"x":-70,"y":-74},"bp_x":-1541,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":186,"y":182,"width":140,"height":148,"centerOffset":{"x":-70,"y":-74},"bp_x":-1681,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":186,"y":182,"width":139,"height":148,"centerOffset":{"x":-70,"y":-74},"bp_x":-1821,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":183,"y":202,"width":145,"height":108,"centerOffset":{"x":-73,"y":-54},"bp_x":-1960,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":188,"y":205,"width":136,"height":101,"centerOffset":{"x":-68,"y":-51},"bp_x":-2105,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":188,"y":205,"width":135,"height":102,"centerOffset":{"x":-68,"y":-51},"bp_x":-2241,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":183,"y":189,"width":145,"height":133,"centerOffset":{"x":-73,"y":-67},"bp_x":-2376,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":185,"y":182,"width":142,"height":147,"centerOffset":{"x":-71,"y":-74},"bp_x":-2521,"bp_y":0}],"delay":"100"},
+        {"sheets":[{"x":186,"y":182,"width":139,"height":148,"centerOffset":{"x":-70,"y":-74},"bp_x":-2663,"bp_y":0}],"delay":"100"}]};
+
+    var Smgr = new Pig2d.SceneManager({
+        container : document.querySelector('#sprite_window')
+    });
+
+    var node;
+    var imgObj = new Image();
+    imgObj.onload = function() {
+
+        node = new Pig2d.node();
+        var model =  new Pig2d.SpriteModel( {
+                    data : dataset,
+                    imgObj : this
+                }
+        );
+
+        node.set(
+                {model :model }
+        );
+        node.get('model').setPosition(160,120);
+        node.get('model').setupAnimation();
+        node.get('model').set('AnimationStatus','stop');
+        node.get('model').set('AnimationEndCallback',function() {
+
+            console.log('animation end.')
+
+        });
+
+        Smgr.add(node);
+
+        loop();
+
+    }
+    imgObj.src = "jaint_drill.png";
+
+
+    //처음 부터 플레이
+    document.getElementById('btn_play').addEventListener('click',function() {
+
+        var ani_info = JSON.parse(document.getElementById('inp_animation-range').value);
+
+        node.get('model').set('endFrame',ani_info.end);
+        node.get('model').set('startFrame',ani_info.start);
+
+        node.get('model').setFrame(ani_info.start);
+        node.get('model').set('AnimationStatus','play');
+
+    });
+
+    var frame_total = 0;
+    var loop_count = 0;
+    var framerate_info = document.querySelector("#text-framerate-info");
+    var mytimer = new gbox3d.core.Timer();
+
+    function loop() {
+
+        var deltaTime = mytimer.getDeltaTime();
+
+        frame_total += Math.round(1.0 / deltaTime);
+        loop_count++;
+
+        framerate_info.innerText = Math.round(frame_total / loop_count);
+
+
+        Smgr.updateAll(deltaTime);
+
+        //node.get('model').applyAnimation(deltaTime);
+
+        requestAnimationFrame(loop);
+
+    }
+
+</script>
+
+
+
+</body>
+</html>

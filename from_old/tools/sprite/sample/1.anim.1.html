@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title> sprite animation </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../../libs/jquery-2.0.3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../../libs/backbone/underscore.js"></script>
+    <script src="../../../libs/backbone/backbone.js"></script>
+
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <!--<script src="../../libs/gl-matrix.js"></script>-->
+
+    <script src="../../../libs/pig2d/js/core.js"></script>
+    <script src="../../../libs/pig2d/js/node2d.js"></script>
+
+
+</head>
+
+<body>
+
+<div style="width: 320px; margin: auto;">
+
+    <p id='text-framerate-info'>frame rate</p>
+
+    <div id='sprite_window' style="position: relative;height :260px;margin-top: 3px;">
+
+        <svg style="position: absolute;height :240px;border: 1px solid;" >
+
+            <line x1="0" y1="120" x2="320" y2="120" style="stroke:#000000;"/>
+            <line x1="160" y1="0" x2="160" y2="240" style="stroke:#000000;"/>
+
+        </svg>
+
+    </div>
+    <button id='btn_play'> play </button>
+    <button id='btn_stop'> stop </button>
+    <button id='btn_pause'> pause </button>
+</div>
+
+
+
+<script>
+
+    var dataset = {
+        "name":"",
+        "frames":[
+            {"sheets":[{"x":119,"y":18,"width":87,"height":141,"centerOffset":{"x":-41,"y":-102},"bp_x":-10,"bp_y":-3,"texture":"../../res/Genjuro.gif"}],"delay":"100"},
+            {"sheets":[{"x":120,"y":16,"width":87,"height":141,"centerOffset":{"x":-40,"y":-104},"bp_x":-102,"bp_y":-1,"texture":"../../res/Genjuro.gif"}],"delay":"100"},
+            {"sheets":[{"x":120,"y":17,"width":87,"height":141,"centerOffset":{"x":-40,"y":-103},"bp_x":-196,"bp_y":-2,"texture":"../../res/Genjuro.gif"}],"delay":"100"},
+            {"sheets":[{"x":119,"y":18,"width":87,"height":141,"centerOffset":{"x":-41,"y":-102},"bp_x":-293,"bp_y":-3,"texture":"../../res/Genjuro.gif"}],"delay":"100"},
+            {"sheets":[{"x":119,"y":18,"width":87,"height":141,"centerOffset":{"x":-41,"y":-102},"bp_x":-391,"bp_y":-3,"texture":"../../res/Genjuro.gif"}],"delay":"200"},
+            {"sheets":[{"x":119,"y":18,"width":87,"height":141,"centerOffset":{"x":-41,"y":-102},"bp_x":-489,"bp_y":-3,"texture":"../../res/Genjuro.gif"}],"delay":"100"},
+            {"sheets":[{"x":119,"y":18,"width":87,"height":141,"centerOffset":{"x":-41,"y":-102},"bp_x":-133,"bp_y":-147,"texture":"../../res/Genjuro.gif"}],"delay":"300"},
+            {"sheets":[{"x":119,"y":18,"width":87,"height":141,"centerOffset":{"x":-41,"y":-102},"bp_x":-133,"bp_y":-147,"texture":"../../res/Genjuro.gif"}],"delay":"50"},
+            {"sheets":[{"x":119,"y":18,"width":87,"height":141,"centerOffset":{"x":-41,"y":-102},"bp_x":-227,"bp_y":-148,"texture":"../../res/Genjuro.gif"}],"delay":"50"},
+            {"sheets":[{"x":119,"y":33,"width":112,"height":123,"centerOffset":{"x":-41,"y":-87},"bp_x":-324,"bp_y":-166,"texture":"../../res/Genjuro.gif"}],"delay":"250"}]
+    };
+
+    var Smgr = new Pig2d.SceneManager({
+        container : document.querySelector('#sprite_window')
+    });
+
+
+    var node;
+    var imgObj = new Image();
+    imgObj.onload = function() {
+
+        node = new Pig2d.node();
+        var model =  new Pig2d.SpriteModel( {
+                    data : dataset,
+                    imgObj : this
+                }
+        );
+
+        node.set(
+                {model :model }
+        );
+
+        node.get('model').setPosition(160,120);
+
+        node.get('model').setupAnimation();
+        node.get('model').set('AnimationStatus','stop');
+        node.get('model').set('isAnimationLoop',false);
+
+        Smgr.add(node);
+    }
+
+    imgObj.src = "../../../res/Genjuro.gif";
+
+
+    //정지하기
+    document.getElementById('btn_stop').addEventListener('click',function() {
+
+        node.get('model').set('AnimationStatus','stop');
+
+        //node.get('model').stop_animate();
+
+    });
+
+    //일시정지 & 재계
+    document.getElementById('btn_pause').addEventListener('click',function() {
+
+        node.get('model').set('AnimationStatus','play');
+
+//        if(node.get('model').get('animationHID') == null) {
+//            (node.get('model').animate({
+//                endCallBack : function(obj) {
+//                },
+//                loop : true,
+//                startFrame :  0
+//            }))();
+//        }
+//        else {
+//            node.get('model').stop_animate();
+//        }
+    });
+
+    //처음 부터 플레이
+    document.getElementById('btn_play').addEventListener('click',function() {
+
+        node.get('model').setFrame(0);
+        node.get('model').set('AnimationStatus','play');
+
+//        //기존에 플레이 중이면 멈추고
+//        node.get('model').stop_animate();
+//        //처음부터 시작하기
+//        node.get('model').setFrame(0);
+//
+//
+//        (node.get('model').animate({
+//            endCallBack : function(obj) {
+//            },
+//            loop : true,
+//            startFrame :  0
+//        }))();
+
+    });
+
+    var frame_total = 0;
+    var loop_count = 0;
+    var framerate_info = document.querySelector("#text-framerate-info");
+    var mytimer = new gbox3d.core.Timer();
+
+    requestAnimationFrame(
+            function loop() {
+
+                var deltaTime = mytimer.getDeltaTime();
+
+                frame_total += Math.round(1.0 / deltaTime);
+                loop_count++;
+
+                framerate_info.innerText = Math.round(frame_total / loop_count);
+
+
+                Smgr.updateAll(deltaTime);
+
+                //node.get('model').applyAnimation(deltaTime);
+
+                requestAnimationFrame(loop);
+
+            }
+
+    );
+
+</script>
+
+
+
+</body>
+</html>

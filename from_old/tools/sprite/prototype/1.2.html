@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf8" >
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <title> 스프라이트 자르기 예제 </title>
+
+    <script src="../../../libs/kinetics/kinetic-v4.5.2.js"></script>
+    <script src="../../../libs/jquery-1.9.1.min.js"></script>
+
+    <script src="../../../libs/gl-matrix-min.js"></script>
+    <script src="../../../libs/pig2d/js/core.js"></script>
+
+    <script src="../../../libs/kinetics/kinetic.util.js"></script>
+
+    <style>
+
+        #main_window {
+            position: relative;
+            /*overflow: auto;*/
+            width: 320px;
+            height: 240px;
+            overflow: auto;
+            border: 1px solid #000000;
+
+        }
+
+        #main_window div {
+            position: absolute;
+
+        }
+
+        #img_view {
+            margin: 0px;
+            width: 588px;
+            height: 1751px;
+
+            background-image: url(../../../res/Genjuro.gif);
+        }
+
+        #kinetic_stage {
+            margin: 0px;
+            width: 320px;
+            height: 240px;
+
+        }
+
+        #sprite_window {
+            position: relative;
+            width: 320px;
+            height: 240px;
+            border: 1px solid #000000;
+            /*top: 240px;*/
+
+        }
+
+        .dummy  {
+            width: 320px;
+            height: 240px;
+        }
+
+    </style>
+
+    <script>
+
+        $(function() {
+
+            var stage = new Kinetic.Stage({
+                container : "kinetic_stage",
+                width : 320,
+                height : 240
+            });
+
+            var layer = new Kinetic.Layer({
+                name : 'root_layer'
+            });
+
+            var scrollPos={x:0,y:0};
+            var cutter = new gbox3d.Kinetic.Util.Cutter(layer);
+
+            //영역얻어내기
+            $('#btn_test').on('click',function() {
+
+                //console.log( cutter.getRect());
+                var cut_rect = cutter.getRect(scrollPos);
+
+                $('#text_rgn').text(JSON.stringify(cutter.getRect(scrollPos)));
+
+                var sheet = $('#sprite_window .sheet');
+
+                $('#sprite_window .sheet').css('background-image','url(../../../res/Genjuro.gif)');
+                $('#sprite_window .sheet').css('width',cut_rect.width+'px');
+                $('#sprite_window .sheet').css('height',cut_rect.height+'px');
+
+                var posx = 320/2  -  cut_rect.width/2;
+                var posy = 240/2  -  cut_rect.height/2;
+
+                $(sheet).css('top', posy + 'px');
+                $(sheet).css('left', posx + 'px');
+
+                $('#sprite_window .sheet').css('background-position',
+                        '-' + cut_rect.sx + 'px -' + cut_rect.sy + 'px' );
+            });
+
+            $('#main_window').on('scroll',function(evt) {
+
+                //console.log(evt.currentTarget.scrollTop);
+
+                //console.log(stage.attrs.container);
+                $('#kinetic_stage').css('top',  evt.currentTarget.scrollTop + 'px');
+                $('#kinetic_stage').css('left',  evt.currentTarget.scrollLeft + 'px');
+
+                scrollPos.y = evt.currentTarget.scrollTop;
+                scrollPos.x = evt.currentTarget.scrollLeft;
+
+            });
+
+            //스테이지 붙이기
+            stage.add(layer);
+        });
+
+    </script>
+
+
+</head>
+<body>
+
+<button id="btn_test"> 영역 얻기 </button>
+<p id = 'text_rgn'>{}</p>
+
+
+    <div id="main_window">
+        <div id="img_view"></div>
+        <div id="kinetic_stage" ></div>
+
+    </div>
+
+    <div id='sprite_window'>
+
+        <div class='sheet'
+
+             style="position: absolute">
+
+        </div>
+
+    </div>
+
+
+
+
+</body>
+</html>

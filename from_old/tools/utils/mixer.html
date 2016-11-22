@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>mix tool v0.1 </title>
+
+    <!--
+    file 처리
+    출처 : https://github.com/eligrey/FileSaver.js/
+    -->
+    <script src="../../libs/extra/FileSaver.js"></script>
+
+    <script src="../../libs/extra/canvas-toBlob.js"></script>
+
+</head>
+<body>
+
+<div style="margin :auto; overflow: auto;width: 320px;height: 240px;border: 1px solid;">
+    <canvas id='mycanvas'>
+    </canvas>
+</div>
+
+<div style="margin :auto;margin-top: 5px; height: 240px;width: 320px; border: 1px solid;" >
+    <input type="file" id="inp_select-files" name="files[]" multiple />
+    <div>
+        <textarea id='textarea-export' style="margin: auto; display: block; width: 80%; height: 100px" ></textarea>
+    </div>
+    <div>
+        <input id='inp_exp-name' />
+        <button id="btn-save-png" >save png</button>
+        <button id="btn-save-json" >save json</button>
+    </div>
+
+
+</div>
+
+
+<script>
+
+
+    var images = [];
+    var areas = []
+
+    function OnloadComplete(param) {
+
+        console.log(param);
+        console.log(images);
+
+        var canvas = document.getElementById('mycanvas');
+        canvas.width	= param.total_width;
+        canvas.height	= param.max_height;
+        var ctx		= canvas.getContext('2d');
+
+        var text_area = document.getElementById('textarea-export');
+
+        var thicks = 0;
+        for(var i=0;i < images.length;i++) {
+            var imgObj = images[i];
+
+            ctx.drawImage(imgObj,0,0,imgObj.width,imgObj.height,thicks,0,imgObj.width,imgObj.height);
+
+            var area = {
+                sx : thicks,
+                sy : 0,
+                width : imgObj.width,
+                height : imgObj.height
+            }
+
+            areas.push(area);
+
+            thicks += imgObj.width;
+
+        }
+
+        text_area.value = JSON.stringify(areas);
+
+    }
+
+    document.querySelector('#inp_select-files').addEventListener('change',function(evt) {
+
+        var files = evt.target.files;
+
+        var i=0;
+
+        var total_width = 0;
+        var max_height = 0;
+
+        //for (var i = 0, f; f = files[i]; i++) {
+        function load_next() {
+
+            var f = files[i];
+
+            var reader = new FileReader();
+
+            // Closure to capture the file information.
+            reader.onload = (function(theFile) {
+
+                return function(e) {
+
+                    console.log(theFile.name);
+
+                    var imgObj = new Image();
+                    var result = e.target.result;
+
+                    imgObj.onload = function() {
+
+                        if(max_height < imgObj.height) {
+                            max_height = imgObj.height;
+                        }
+
+                        total_width += imgObj.width;
+
+                        imgObj.filename = theFile.name;
+
+                        images.push(imgObj);
+
+                        i++;
+                        if(files.length > i) {
+                            load_next();
+                        }
+                        else {
+                            OnloadComplete({
+                                max_height : max_height,
+                                total_width : total_width
+
+                            });
+                        }
+                    }
+                    imgObj.src = result;
+                };
+
+            })(f);
+
+            // Read in the image file as a data URL.
+            //reader.readAsText(f,'utf-8');
+            reader.readAsDataURL(f);
+
+        }
+        load_next();
+    });
+
+    document.getElementById('btn-save-png').addEventListener('click',function() {
+
+        var export_name = document.getElementById('inp_exp-name').value;
+
+        export_name = (export_name == "") ? "mixed" : export_name;
+
+        var canvas = document.getElementById("mycanvas"), ctx = canvas.getContext("2d");
+// draw to canvas...
+        canvas.toBlob(function(blob) {
+            saveAs(blob, export_name + ".png");
+        });
+
+    });
+
+    document.getElementById('btn-save-json').addEventListener('click',function() {
+
+        var export_name = document.getElementById('inp_exp-name').value;
+
+        export_name = (export_name == "") ? "mixed" : export_name + "_mixed";
+
+        var text_area = document.getElementById('textarea-export');
+
+        var blob = new Blob([text_area.value], {type: "text/json;charset=utf-8"});
+        saveAs(blob, export_name + ".json");
+
+    });
+
+</script>
+
+
+
+
+</body>
+</html>

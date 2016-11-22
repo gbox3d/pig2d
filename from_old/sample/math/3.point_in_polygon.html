@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf8" >
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <title> 폴리건 예제 </title>
+
+
+    <script src="../../libs/pig2d/js/core.js"></script>
+
+</head>
+<body>
+
+<div id="main_window" style="
+            margin: 0px;
+            width: 320px;
+            height: 240px;
+            border: 1px solid;
+            position: relative;
+            ">
+
+    <svg >
+
+        <polygon points="200,10 250,190 160,210"
+                 style="fill:lime;stroke:purple;stroke-width:1"/>
+
+
+        <circle class="anchor" cx="0" cy="0" r='5' fill="red" />
+        <circle class="anchor" cx="150" cy="0" r='5' fill="red" />
+        <circle class="anchor" cx="150" cy="150" r='5' fill="red" />
+        <circle class="anchor" cx="0" cy="150" r='5' fill="red" />
+
+        <circle class="pin" cx="150" cy="120" r='15' fill="red" />
+
+
+
+    </svg>
+
+
+</div>
+
+
+<script>
+
+
+    var main_window = document.getElementById('main_window');
+
+
+    var points = [];
+
+    function update_points() {
+        var anchors = document.querySelectorAll('svg circle.anchor');
+        var polygon = document.querySelector('svg polygon');
+        var pin = document.querySelector('svg circle.pin');
+
+
+        points.length = 0;
+
+        var pointstring = ''
+
+        for(var i=0; i < anchors.length;i++) {
+
+            var point = new gbox3d.core.Vect2d();
+            point.formSVG(anchors[i]);
+            points.push(point);
+
+            pointstring += point.X + ',' + point.Y + ' ';
+
+        }
+
+        //console.log(pointstring);
+
+        polygon.setAttribute('points',pointstring);
+
+        var pin_pos = new gbox3d.core.Vect2d();
+        pin_pos.formSVG(pin);
+
+        if(pin_pos.InPolygon(points)) {
+            pin.setAttribute('fill','green');
+        }
+        else {
+            pin.setAttribute('fill','red');
+        }
+
+
+    }
+
+
+    function anchor_move(evt) {
+
+        evt.preventDefault();
+
+        var x = parseInt(this.attributes.cx.value);
+        var y = parseInt(this.attributes.cy.value);
+
+        this.attributes.cx.value =x = evt.webkitMovementX + x;
+        this.attributes.cy.value =y = evt.webkitMovementY + y;
+
+        update_points();
+
+
+
+
+    }
+
+    update_points();
+
+    function pin_move(evt) {
+
+        evt.preventDefault();
+
+        var x = parseInt(this.attributes.cx.value);
+        var y = parseInt(this.attributes.cy.value);
+
+        this.attributes.cx.value = x = evt.webkitMovementX + x;
+        this.attributes.cy.value = y = evt.webkitMovementY + y;
+
+        var pin_pos = new gbox3d.core.Vect2d(x,y);
+
+        if(pin_pos.InPolygon(points)) {
+            this.setAttribute('fill','green');
+        }
+        else {
+            this.setAttribute('fill','red');
+        }
+    }
+
+    var movehandler;
+
+    main_window.addEventListener('mousedown',function(evt) {
+
+        evt.preventDefault();
+
+       // console.log(evt.target);
+
+        if(evt.target.classList.contains('anchor') == true) {
+            main_window.style.cursor = 'move';
+            movehandler = anchor_move.bind(evt.target);
+            main_window.addEventListener('mousemove',movehandler);
+        }
+        else if(evt.target.classList.contains('pin') == true) {
+            main_window.style.cursor = 'move';
+            movehandler = pin_move.bind(evt.target);
+            main_window.addEventListener('mousemove',movehandler);
+
+        }
+    });
+
+    main_window.addEventListener('mouseup',function(evt) {
+        evt.preventDefault();
+
+        main_window.style.cursor = 'default';
+        main_window.removeEventListener('mousemove',movehandler);
+
+    });
+
+</script>
+
+
+</body>
+</html>

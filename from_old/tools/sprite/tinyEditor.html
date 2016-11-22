@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf8" >
+<meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+<title> tiny sprite editor </title>
+
+<script src="http://code.jquery.com/jquery-latest.js"></script>
+
+<!--<script src="../../libs/kinetics/kinetic-v4.5.2.js"></script>-->
+<script src="http://gbox3d.tistory.com/attachment/cfile28.uf@272227465234768B1FC971.js"></script>
+
+<!--<script src="../../libs/gl-matrix-min.js"></script>-->
+<script src="http://gbox3d.tistory.com/attachment/cfile10.uf@2605F246523476962F4871.js"></script>
+
+<!--<script src="../../libs/pig2d/js/core.js"></script>-->
+<script src="http://gbox3d.tistory.com/attachment/cfile24.uf@2449C246523476A30CEA65.js"></script>
+
+<!--<script src="../../libs/kinetics/kinetic.util.js"></script>-->
+<script src="http://gbox3d.tistory.com/attachment/cfile8.uf@2279F63C5236E2640EFDD8.js"></script>
+
+<style>
+
+    #main_window {
+        position: relative;
+        /*overflow: auto;*/
+        width: 640px;
+        height: 480px;
+        overflow: auto;
+        border: 1px solid #000000;
+
+    }
+
+    #main_window div {
+        position: absolute;
+
+    }
+
+    #img_view {
+        margin: 0px;
+    }
+
+    #kinetic_stage {
+        margin: 0px;
+        width: 320px;
+        height: 240px;
+
+    }
+
+    #sprite_window {
+        position: relative;
+        width: 320px;
+        height: 240px;
+        border: 1px solid #000000;
+        margin-top: 5px;
+        /*top: 240px;*/
+
+    }
+
+    .dummy  {
+        width: 320px;
+        height: 240px;
+    }
+
+</style>
+
+<script>
+
+App = {};
+
+$(function() {
+
+    //이미지 창
+    var stage = new Kinetic.Stage({
+        container : "kinetic_stage",
+        width : 640,
+        height : 480
+    });
+
+    var layer = new Kinetic.Layer({
+        name : 'root_layer'
+    });
+
+    //스프라이트 편집창
+    var stage_editor = new Kinetic.Stage({
+        container : "kinetic_stage_editor",
+        width : 320,
+        height : 240
+    });
+
+    var layer_editor = new Kinetic.Layer({
+        name : 'root_layer2'
+    });
+    stage_editor.add(layer_editor);
+
+    //스테이지 붙이기
+    stage.add(layer);
+
+    //스크롤 관리
+    var scrollPos={x:0,y:0};
+
+    //자르기툴
+    var cutter = new gbox3d.Kinetic.Util.Cutter(layer);
+    //스프라이트 위치 편집툴
+    var sheeter = new gbox3d.Kinetic.Util.Sheeter(
+            {
+                layer : layer_editor,
+                NoDelelteAnchor : true, //삭제앵커 안만들기
+                current_node : $('#sprite_window .sheet')[0]
+            }
+    );
+
+    //var imgObj = null;
+
+    sheeter.show();
+
+    //추가 적인 확장을 위해서...
+    App.SrcImageStage = stage;
+    App.SpriteStage = stage_editor;
+    App.Cutter = cutter;
+    App.Sheeter = sheeter;
+    App.ImgObj = null;
+
+    //이밴트 핸들러 등록
+    //내용 적용
+    $('#btn-set-sprite').on('click',function() {
+        //var data = JSON.parse('{' + $('#inp-rgninfo').val() + '}');
+        eval('data = {' + $('#inp-rgninfo').val() + '}' );
+
+        console.log(data);
+
+
+
+        cutter.setRect(
+                new gbox3d.core.Vect2d(data.cutx - scrollPos.x,data.cuty - scrollPos.y),
+                new gbox3d.core.Vect2d(data.cutx+data.width -scrollPos.x ,data.cuty+data.height - scrollPos.y)
+        );
+
+        sheeter.setPosition(stage_editor.getWidth()/2 + data.basex,stage_editor.getHeight()/2 + data.basey);
+
+
+    });
+
+    //영역얻어내기
+    $('#btn-get-sprite').on('click',function() {
+
+        if(!App.imgObj) return;
+
+        var imgObj = App.imgObj;
+
+        var cut_rect = cutter.getRect(scrollPos);
+
+        if(cut_rect.sx < 0) {
+            cut_rect.sx = 0;
+        }
+        if(cut_rect.sy < 0) {
+            cut_rect.sy = 0;
+        }
+
+        if( cut_rect.sx + cut_rect.width > imgObj.width ) {
+
+            cut_rect.width -= (cut_rect.sx + cut_rect.width - imgObj.width );
+
+        }
+
+        if( cut_rect.sy + cut_rect.height > imgObj.height ) {
+
+            cut_rect.height -= (cut_rect.sy + cut_rect.height - imgObj.height );
+
+        }
+
+        var sheeter_rect = sheeter.getRect();
+
+        $('#inp-rgninfo').val(
+                "cutx:" + cut_rect.sx +
+                        ",cuty :" + cut_rect.sy +
+                        ",width :" + cut_rect.width +
+                        ",height :" + cut_rect.height +
+                        ",basex :" + -(160 - sheeter_rect.sx) +
+                        ",basey :" + -(120 - sheeter_rect.sy)
+
+
+        );
+
+    });
+
+    //스크롤 이밴트 처리
+    $('#main_window').on('scroll',function(evt) {
+
+        $('#kinetic_stage').css('top',  evt.currentTarget.scrollTop + 'px');
+        $('#kinetic_stage').css('left',  evt.currentTarget.scrollLeft + 'px');
+
+        scrollPos.y = evt.currentTarget.scrollTop;
+        scrollPos.x = evt.currentTarget.scrollLeft;
+
+    });
+
+    //텍스춰 로딩
+    $('#btn-load-texture').on('click',function() {
+
+        var imgObj = new Image();
+        App.imgObj = imgObj;
+
+        imgObj.onload = function() {
+
+
+
+            var canvas = document.createElement('canvas');
+
+            canvas.width = imgObj.width;
+            canvas.height = imgObj.height;
+
+            var context = canvas.getContext('2d');
+
+            context.drawImage(imgObj,0,0);
+
+            document.querySelector('#img_view').appendChild(canvas);
+
+            //$('#img_view').append($(imgObj));
+            $('#sprite_window .sheet').css('background-image','url('+ imgObj.src +')');
+
+        }
+        imgObj.src = $('#inp-textureurl').val();
+    });
+
+    //배경컬러 설정
+    $('#inp-color').on('change',function(evt) {
+
+        $('#img_view').css('background-color',$(this).val());
+        $('#sprite_window').css('background-color',$(this).val());
+
+    });
+
+    //루프 처리
+    (function loop() {
+
+
+        if(App.imgObj != null) {
+
+            var imgObj = App.imgObj;
+
+            var cut_rect = cutter.getRect(scrollPos);
+
+            if(cut_rect.sx < 0) {
+                cut_rect.sx = 0;
+            }
+            if(cut_rect.sy < 0) {
+                cut_rect.sy = 0;
+            }
+
+            if( cut_rect.sx + cut_rect.width > imgObj.width ) {
+
+                cut_rect.width -= (cut_rect.sx + cut_rect.width - imgObj.width );
+
+            }
+
+            if( cut_rect.sy + cut_rect.height > imgObj.height ) {
+
+                cut_rect.height -= (cut_rect.sy + cut_rect.height - imgObj.height );
+
+            }
+
+            var sheet = $('#sprite_window .sheet');
+
+            $('#sprite_window .sheet').css('width',cut_rect.width+'px');
+            $('#sprite_window .sheet').css('height',cut_rect.height+'px');
+
+            $('#sprite_window .sheet').css('background-position',
+                    '-' + cut_rect.sx + 'px -' + cut_rect.sy + 'px' );
+
+            sheeter.setRect({
+                start : new gbox3d.core.Vect2d(0,0),
+                end : new gbox3d.core.Vect2d(cut_rect.width,cut_rect.height)
+            });
+
+            //위치 갱신해주기
+            sheeter.setCurrentNode(sheet);
+        }
+
+        stage.draw();
+        stage_editor.draw();
+
+        requestAnimationFrame(loop);
+    })();
+
+    //파일박스에서 얻기
+    document.getElementById('inp-select-files').addEventListener('change',function(evt) {
+
+        var files = evt.target.files; // FileList object
+
+        for (var i = 0, f; f = files[i]; i++) {
+
+            //console.log(f);
+
+            var reader = new FileReader();
+
+            // Closure to capture the file information.
+            reader.onload = (function(theFile) {
+
+                return function(e) {
+
+                    App.imgObj = new Image();
+
+                    var imgObj = App.imgObj;
+                    var view_element = document.querySelector('#img_view');
+
+                    imgObj.onload = function() {
+
+                        while (view_element.firstChild) {
+                            view_element.removeChild(view_element.firstChild);
+                        }
+
+                        var canvas = document.createElement('canvas');
+
+                        canvas.width = imgObj.width;
+                        canvas.height = imgObj.height;
+
+                        var context = canvas.getContext('2d');
+
+                        context.drawImage(imgObj,0,0);
+
+                        view_element.appendChild(canvas);
+
+                        $('#sprite_window .sheet').css('background-image','url('+ imgObj.src +')');
+
+                    }
+                    imgObj.src = e.target.result;
+                };
+            })(f);
+
+            // Read in the image file as a data URL.
+            reader.readAsDataURL(f);
+        }
+    });
+
+});
+
+
+
+
+</script>
+
+
+</head>
+<body>
+
+<p>tinyEditor v0.2</p>
+
+<div>
+    <input id="inp-textureurl" value="http://2.bp.blogspot.com/-KFeoUSsKwDY/UiMry4b8aXI/AAAAAAAAANg/gppOp42ELpk/s1600/galaga_fixed.png" />
+    <button id='btn-load-texture'>load</button>
+    <input type="file" id="inp-select-files" name="files[]" multiple />
+</div>
+<div>
+    Select color: <input id='inp-color' type="color" value="#ffffff">
+</div>
+
+<div>
+    <button id="btn-get-sprite"> 영역 얻기 </button>
+    <input id='inp-rgninfo' style="width: 360px;"  />
+    <button id="btn-set-sprite"> 내용 적용 </button>
+</div>
+
+
+<div id="main_window">
+    <div id="img_view"></div>
+    <div id="kinetic_stage" ></div>
+
+</div>
+
+<div id='sprite_window'>
+
+    <svg style="position: absolute;" >
+
+        <line x1="0" y1="120" x2="320" y2="120" style="stroke:#000000;"/>
+        <line x1="160" y1="0" x2="160" y2="240" style="stroke:#000000;"/>
+
+    </svg>
+
+    <div class='sheet'
+         style="position: absolute">
+    </div>
+
+    <div id="kinetic_stage_editor" style="position: absolute;" ></div>
+
+</div>
+
+
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title> simple sample </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <!--<script src="../libs/backbone/json2.js"></script>-->
+    <script src="../../libs/backbone/backbone.js"></script>
+
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <script src="../../libs/gl-matrix-min.js"></script>
+
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+    <!--<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/pig2d/js/node2d.js"></script>-->
+
+</head>
+
+<body>
+
+<div style="width: 960px; margin: auto;">
+
+    <p id='text-framerate-info'>frame rate</p>
+
+    <div id='sprite_window' style="
+    position: relative;
+    height :480px; /* 높이를 명시해주어야 영역이 잡혀 유아이가 밑으로 내려감.*/
+    margin-top: 3px;
+    /*background-color: #bf62ff*//*배경색을 정해준다.*/
+    background-image: url(images/background/map1/map1.png);
+
+    ">
+
+        <svg class='helper-grid' style="position: absolute;height :480px;border: 1px solid;" >
+
+            <line x1="0" y1="240" x2="960" y2="240" style="stroke:#000000;"/>
+            <line x1="480" y1="0" x2="480" y2="480" style="stroke:#000000;"/>
+
+        </svg>
+
+    </div>
+
+    <div id="ui-pannel" style="height: 120px;background-color: #dcdcdc;">
+        <div class='fire1' style="margin-top :30px; margin-left: 30px; display: inline-block; width: 60px;height: 60px; background-color: #ff0000"></div>
+        <div class='fire2' style="margin-left: 30px;display: inline-block;width: 60px;height: 60px; background-color: #00ff00"></div>
+        <div class='fire3' style="margin-left: 30px;display: inline-block;width: 60px;height: 60px; background-color: #0000ff"></div>
+    </div>
+
+</div>
+
+
+<script>
+    /*
+    물고기를 랜덤 하게 여기저기 움직이는 예제
+     */
+
+
+    var App = {};
+    App.fishes = new Array();
+
+
+    //씬메니져 생성하기
+    var Smgr = new Pig2d.SceneManager({
+        container : document.querySelector('#sprite_window')
+        ,window_size : { //클리핑 범위 지정
+            width : 960,
+            height: 480
+        }
+    });
+
+    //랜덤이동
+    function random_move(node) {
+
+        var model = node.get('model');
+        var cur_position = model.getPosition();
+
+        //다음 목표지점 얻기
+        do {
+            var tx = Math.random() * 900;
+            var ty = Math.random() * 100;
+            ty += 360;
+        } while(cur_position.X == tx && cur_position.Y == ty)
+
+        if(cur_position.X < tx) {
+            model.attributes.flipX = true;
+        }
+        else {
+            model.attributes.flipX = false;
+        }
+        node.update();
+
+        //코루틴 역활
+        setTimeout(function() {
+
+            cur_position = model.getPosition();
+
+            //이동할 거리 구하기
+            var vt = new gbox3d.core.Vect2d(tx,ty);
+            vt.subToThis(cur_position);
+            var dist = vt.getDistance();
+
+            var duration_time = dist/100; //1초에 100만큼 이동
+
+            console.log(duration_time);
+
+            model.transition({
+                position : new gbox3d.core.Vect2d(tx,ty),
+                time : duration_time,
+                timing_function : 'ease'
+            });
+
+        },0);
+    }
+
+    var node = Smgr.addImageNode({
+        src : './images/fish/f0.png',
+        onload : function(node) {
+            console.log(node.get('model').get('imgObj').src + ' loaded ');
+
+            node.get('model').setPosition(800,360);
+            node.update();
+
+            //트랜지션 설정
+            node.get('model').setupTransition({
+                TransitionEndCallBack : function() {
+                    random_move(node);
+                }
+            });
+
+            random_move(node);
+
+            App.fishes.push(node);
+
+        }
+    });
+
+    //타이머 설정 및 퍼포먼트 테스트용 정보
+    var mytimer = new gbox3d.core.Timer();
+    var framerate_info = document.querySelector("#text-framerate-info");
+    var frame_total = 0;
+    var loop_count = 0;
+
+    //게임 루프
+    requestAnimationFrame(
+            function loop() {
+
+                var deltaTime = mytimer.getDeltaTime();
+                frame_total += Math.round(1.0 / deltaTime);
+
+                loop_count++;
+
+                framerate_info.innerText = Math.round(frame_total / loop_count);
+
+                //씬메니져 업데이트
+                //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+                Smgr.updateAll();
+
+                requestAnimationFrame(loop);
+
+            }
+
+    );
+
+</script>
+
+
+
+</body>
+</html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf8" >
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <title> 스프라이트 모델 예제 </title>
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <!--<script src="../../libs/backbone/json2.js"></script>-->
+    <script src="../../libs/backbone/backbone.js"></script>
+
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <!--<script src="../../libs/gl-matrix.js"></script>-->
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+
+    <script src="ani_data.js"></script>
+
+</head>
+<body>
+
+<div style="width: 320px; margin: auto;">
+
+    <p id='text-framerate-info'>frame rate</p>
+
+    <div id='sprite_window' style="position: relative;margin-top: 3px;">
+
+        <svg style="position: absolute;height :240px;border: 1px solid;" >
+
+            <line x1="0" y1="120" x2="320" y2="120" style="stroke:#000000;"/>
+            <line x1="160" y1="0" x2="160" y2="240" style="stroke:#000000;"/>
+
+        </svg>
+
+    </div>
+</div>
+
+<script>
+
+    //씬메니져 생성하기
+    var Smgr = new Pig2d.SceneManager({
+        container : document.querySelector('#sprite_window')
+        ,window_size : { //클리핑 범위 지정
+            width : 320,
+            height: 240
+        }
+    });
+
+    var img_files = ['mushroom.png','jaint_drill.png','entree.png','goblinjr.png','gone.png','gorgon.png','hipiqeen.png','orc.png','slime.png','troll.png'];
+    var datas = [Animation_Data.mushroome,Animation_Data.jaint_drill,Animation_Data.entree,Animation_Data.goblinjr,
+        Animation_Data.gone,
+        Animation_Data.gorgon,
+        Animation_Data.hipiqeen,
+        Animation_Data.orc,
+        Animation_Data.slime,
+        Animation_Data.troll
+
+    ];
+
+    var imgObjs = [];
+
+    var Sprites = [];
+
+    function OnLoadComplete() {
+
+
+        for(var i =0;i<datas.length;i++) {
+
+            var node = new Pig2d.node();
+            var model =  new Pig2d.SpriteModel( {
+                        data : datas[i],
+                        imgObj : imgObjs[i]
+                    }
+            );
+
+            node.set(
+                    {model :model }
+            );
+            node.get('model').setPosition(i*30,120);
+
+            (node.get('model').animate({
+                endCallBack : function(obj) {
+                },
+                loop : true,
+                startFrame :  0
+            }))();
+
+            Smgr.add(node);
+
+        }
+
+
+
+    }
+
+    var i=0;
+    (function preLoadImg() {
+
+        var imgObj = new Image();
+        imgObj.onload = function() {
+
+            imgObjs.push(imgObj);
+            i++;
+            if(i < img_files.length) {
+                preLoadImg(); //다음 이미지 로딩
+            }
+            else {
+                OnLoadComplete();
+            }
+
+        }
+        console.log('loading :' + img_files[i]);
+        imgObj.src = img_files[i];
+
+    })();
+
+    //타이머 설정 및 퍼포먼트 테스트용 정보
+    var mytimer = new gbox3d.core.Timer();
+    var framerate_info = document.querySelector("#text-framerate-info");
+    var frame_total = 0;
+    var loop_count = 0;
+
+    //게임 루프
+    requestAnimationFrame(
+            function loop() {
+
+                var deltaTime = mytimer.getDeltaTime();
+                frame_total += Math.round(1.0 / deltaTime);
+
+                loop_count++;
+
+                framerate_info.innerText = Math.round(frame_total / loop_count);
+
+                //씬메니져 업데이트
+                //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+                Smgr.updateAll();
+
+                requestAnimationFrame(loop);
+
+            }
+
+    );
+
+
+
+
+</script>
+
+</body>
+</html>

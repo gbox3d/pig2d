@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimum-scale=1.0, maximum-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+    <title> game </title>
+
+    <script src="http://cdn.sockjs.org/sockjs-0.3.min.js"></script>
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore-min.js"></script>
+    <script src="../../libs/backbone/backbone-min.js"></script>
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+    <script src="../../libs/pig2d/js/system.js"></script>
+
+</head>
+<body>
+
+<div class="pig2d-fullscreen" >
+    <p id ='text-framerate-info' style="position: absolute" >frame rate</p>
+</div>
+
+<script>
+
+    function main(evt) {
+
+        var Objects = [];
+        var connection_id = null;
+
+        var textures = evt.textures;
+
+        //씬메니져 생성하기
+        var Smgr = new Pig2d.SceneManager({
+            container : document.querySelector('.pig2d-fullscreen')
+        });
+
+        var sockjs_url = 'http://localhost:8080/mmo';
+
+        var sockjs = new SockJS(sockjs_url);
+        //this.innerText = '접속종료';
+        sockjs.onopen = function() {
+
+            console.log('open');
+        };
+        sockjs.onmessage = function(e) {
+
+            console.log('message', e.data);
+
+            var data = JSON.parse(e.data);
+
+            if(data.msg == 'welcome!') {
+
+            }
+            else if(data.msg == 'join') {
+
+                //스프라이트 노드 만들기
+                var node = Pig2d.util.createSlicedImage({
+                    imgObj : textures['fighter.png'],
+                    cutx :0,
+                    cuty :0,
+                    width : 32,
+                    height : 48,
+                    basex : -16,
+                    basey : -24
+                });
+
+                node.get('model').setPosition(100,100);
+
+                node.get('model').setupTransition({
+                    TransitionEndCallBack : function() {
+                        console.log('transition end');
+                        console.log(this);
+                    }
+                });
+
+                //씬메니져 등록하기
+                Smgr.add(node);
+
+                Objects[data.id] = {
+                    x : 100,y:100,
+                    node : node
+                }
+
+                if(connection_id == null) {
+                    connection_id = data.id;
+                    sockjs.send( JSON.stringify({
+                        msg : 'req-user-info'
+                    }) );
+                }
+
+            }
+            else if(data.msg == 'user-info') {
+                //자기 자신을 제외한 전체 사용자 정보 전달받기
+                var users = data.users;
+
+                for(var key in users) {
+
+                    var user = users[key];
+
+                    //스프라이트 노드 만들기
+                    var node = Pig2d.util.createSlicedImage({
+                        imgObj : textures['fighter.png'],
+                        cutx :0,
+                        cuty :0,
+                        width : 32,
+                        height : 48,
+                        basex : -16,
+                        basey : -24
+                    });
+
+                    node.get('model').setPosition(user.x,user.y);
+
+                    node.get('model').setupTransition({
+                        TransitionEndCallBack : function() {
+                            console.log('transition end');
+                            console.log(this);
+                        }
+                    });
+
+
+                    //씬메니져 등록하기
+                    Smgr.add(node);
+
+                    Objects[user.id] = {
+                        x : user.x,
+                        y : user.y,
+                        node : node
+                    }
+
+                }
+            }
+            else if(data.msg == 'move') {
+
+                Objects[data.id].node.get('model').transition({
+                    position : new gbox3d.core.Vect2d(data.x,data.y),
+                    time : 1
+                });
+
+                //Objects[data.id].node.get('model').setPosition(data.x,data.y);
+
+            }
+            else if(data.msg == 'disconnect') {
+
+                Smgr.getRootNode().removeChild(Objects[data.id].node);
+                delete Objects[data.id];
+
+            }
+        };
+
+        sockjs.onclose = function() {
+            console.log('close');
+            sockjs = null;
+        };
+
+        document.body.addEventListener('click',function(evt) {
+
+            console.log(evt);
+
+
+            sockjs.send( JSON.stringify({
+                msg : 'move',
+                x: evt.pageX,
+                y: evt.pageY
+            }) );
+
+
+        });
+
+
+
+
+        //게임루프시작
+        Pig2d.system.startGameLoop({
+
+            framerate_info_element : document.querySelector("#text-framerate-info"), //초당 프레임을 표시하기 위한 노드 지정
+            gameLoopCallBack : function(deltaTime) {
+
+                //씬메니져 업데이트
+                //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+                Smgr.updateAll(deltaTime);
+
+            },
+            loopCount_limit : 30 //30프레임마다 초당 프레임을 다시 계산한다.
+        });
+
+
+
+
+
+    }
+
+
+    Pig2d.util.SetupAsset({
+        asset_path : "../../res/",
+        img_files : [
+            "fighter.png"
+        ],
+        OnLoadComplete : main
+
+    });
+
+
+
+
+
+
+
+</script>
+
+</body>
+</html>

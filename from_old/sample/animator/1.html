@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title> window mode sample </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시킨다. -->
+    <script src="../../libs/backbone/underscore-min.js"></script>
+    <script src="../../libs/backbone/backbone-min.js"></script>
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+    <script src="../../libs/pig2d/js/system.js"></script>
+    <script src="../../libs/pig2d/js/util.js"></script>
+
+    <!--샘플핼퍼 -->
+    <script src="sample-helper.js" ></script>
+    <link rel="stylesheet" href="sample-helper.css" />
+
+
+</head>
+
+<body>
+
+<!--화면 가운데 오게하기-->
+<div style="width: 320px; margin: auto;">
+    <p id='text-framerate-info'>frame rate</p>
+
+    <div id="pig2d-320240-screen" ></div>
+</div>
+<script>
+
+
+    function main(evt) {
+
+        var textures = evt.textures;
+
+        //씬메니져 생성하기
+        var Smgr = new Pig2d.SceneManager({
+            container : document.querySelector('#pig2d-320240-screen')
+            ,window_size : { //클리핑 범위 지정
+                width : 320,
+                height: 240
+            }
+        });
+
+        Pig2d.SampleHelper.addScreenGrid(Smgr);
+
+        //스프라이트 노드 만들기
+        var node = Pig2d.util.createSlicedImage({
+            imgObj : textures['Player/Idle.png'],
+            cutx : 0, //원본에서 잘라낼위치
+            cuty : 0,
+            basex : -32, //중점위치
+            basey : -64,
+            width : 64, //잘라낼크기
+            height : 64
+        });
+
+        node.get('model').setPosition(320,120);
+
+        node.get('model').setupTransition({
+            TransitionEndCallBack : function() {
+                console.log('transition end');
+            }
+        });
+
+        document.body.addEventListener('click',function() {
+            node.get('model').transition({
+                position : new gbox3d.core.Vect2d(160,120),
+                time : 2.0
+            });
+        });
+
+        //씬메니져 등록하기
+        Smgr.add(node);
+
+
+        //게임루프시작
+        Pig2d.system.startGameLoop({
+
+            framerate_info_element : document.querySelector("#text-framerate-info"),
+            gameLoopCallBack : function(deltaTime) {
+
+                //씬메니져 업데이트
+                //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+                Smgr.updateAll(deltaTime);
+
+            },
+            loopCount_limit : 30
+        });
+
+    }
+
+
+    Pig2d.util.SetupAsset({
+        asset_path : "../../res/",
+        img_files : [
+            "Player/Idle.png"
+        ],
+        OnLoadComplete : main
+
+    });
+
+
+</script>
+
+
+
+</body>
+</html>

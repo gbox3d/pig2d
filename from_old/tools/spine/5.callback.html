@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title> simple sample </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <!--<script src="../libs/backbone/json2.js"></script>-->
+    <script src="../../libs/backbone/backbone.js"></script>
+
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <script src="../../libs/gl-matrix-min.js"></script>
+
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+    <!--<script src="https://rawgithub.com/gbox3d/pig2d/master/libs/pig2d/js/node2d.js"></script>-->
+
+</head>
+
+<body>
+
+<div style="width: 320px; margin: auto;">
+
+    <p id='text-framerate-info'>frame rate</p>
+
+    <div id='sprite_window' style="
+    position: relative;
+    height :240px; /* 높이를 명시해주어야 영역이 잡혀 유아이가 밑으로 내려감.*/
+    margin-top: 3px;
+    background-color: #bf62ff/*배경색을 정해준다.*/
+    ">
+
+        <svg class='helper-grid' style="position: absolute;height :240px;border: 1px solid;" >
+
+            <line x1="0" y1="120" x2="320" y2="120" style="stroke:#000000;"/>
+            <line x1="160" y1="0" x2="160" y2="240" style="stroke:#000000;"/>
+
+        </svg>
+
+    </div>
+
+    <div id="ui-pannel" style="height: 120px;background-color: #dcdcdc;">
+        <div class='fire1' style="margin-top :30px; margin-left: 30px; display: inline-block; width: 60px;height: 60px; background-color: #ff0000"></div>
+        <div class='fire2' style="margin-left: 30px;display: inline-block;width: 60px;height: 60px; background-color: #00ff00"></div>
+        <div class='fire3' style="margin-left: 30px;display: inline-block;width: 60px;height: 60px; background-color: #0000ff"></div>
+    </div>
+
+</div>
+
+
+<script>
+
+
+    var spine_data_src = {
+        "bones": [
+            { "name": "root", "length": 60 }
+        ],
+        "slots": [
+            { "name": "mn0", "bone": "root", "attachment": "mn_0_00" }
+        ],
+        "skins": {
+            "default": {
+                "mn0": {
+                    "mn_0_00": { "x": -15, "y": 28, "width": 85, "height": 56 },
+                    "mn_0_01": { "x": -17, "y": 27.99, "width": 85, "height": 55 },
+                    "mn_0_02": { "x": -15, "y": 28.99, "width": 85, "height": 57 },
+                    "mn_0_03": { "x": 1, "y": 22, "width": 56, "height": 43 },
+                    "mn_0_04": { "x": -5.99, "y": 22, "width": 86, "height": 46 },
+                    "mn_0_05": { "x": -5.99, "y": 23, "width": 84, "height": 46 },
+                    "mn_0_06": { "x": -17, "y": 25.99, "width": 105, "height": 52 },
+                    "mn_0_07": { "x": -16.99, "y": 25, "width": 106, "height": 52 },
+                    "mn_0_08": { "x": -15, "y": 44.99, "width": 102, "height": 92 },
+                    "mn_0_09": { "x": -12, "y": 46, "width": 97, "height": 92 },
+                    "mn_0_10": { "x": -21, "y": 20.99, "width": 112, "height": 46 },
+                    "mn_0_11": { "x": -15.99, "y": 25, "width": 98, "height": 49 }
+                }
+            }
+        },
+        "animations": {
+            "animation": {
+                "slots": {
+                    "mn0": {
+                        "attachment": [
+                            { "time": 0, "name": "mn_0_00" },
+                            { "time": 0.1666, "name": "mn_0_01" },
+                            { "time": 0.3333, "name": "mn_0_02" },
+                            { "time": 0.6666, "name": "mn_0_03" },
+                            { "time": 0.8333, "name": "mn_0_04" },
+                            { "time": 0.9, "name": "mn_0_05" },
+                            { "time": 0.9666, "name": "mn_0_06" },
+                            { "time": 1, "name": "mn_0_07" },
+                            { "time": 1.1666, "name": "mn_0_08" },
+                            { "time": 1.5, "name": "mn_0_09" },
+                            { "time": 1.5666, "name": "mn_0_10" },
+                            { "time": 1.8333, "name": "mn_0_11" },
+                            { "time": 2, "name": "mn_0_11" }
+                        ]
+                    }
+                }
+            }
+        }
+    };
+
+    //씬메니져 생성하기
+    var Smgr = new Pig2d.SceneManager({
+        container : document.querySelector('#sprite_window')
+        ,window_size : { //클리핑 범위 지정
+            width : 320,
+            height: 240
+        }
+    });
+
+    //solt모델 생성을 위한 인자값 추출하기
+    var ani_obj =  Pig2d.util.spine.extractAnimation({
+        spine_data : spine_data_src, //스파인 툴 데이터
+        slot_name : 'mn0',     //추출해낼 슬롯이름
+        base_url : '../../res/shanny/mon_0', //텍스춰 경로명
+        img_type : 'png' //텍스춰 파일 타입
+
+    });
+
+    console.log(ani_obj);
+
+    //노드 생성
+    var node = new Pig2d.node();
+
+    //스파인툴의 슬롯정보로 스프라이트 만들기
+    var model = new Pig2d.SlotSpriteModel( {
+                data : ani_obj
+            }
+    );
+
+    node.set({model: model});
+
+    node.get('model')
+            .setPosition(160,120)
+            .setFrame(0);
+    Smgr.add(node);
+
+
+    //한번만 에니메이션 하기
+    var applier = node.get('model').getAnimation_applier({
+        startFrame:0,
+        endFrame:3,
+        keyFrame: 2,
+        callbackKeyFrame : function(obj) {
+            console.log('key frame');
+            applier.stop = true;
+        }
+    });
+    applier.stop = false;
+
+
+    //타이머 설정 및 퍼포먼트 테스트용 정보
+    var mytimer = new gbox3d.core.Timer();
+    var framerate_info = document.querySelector("#text-framerate-info");
+    var frame_total = 0;
+    var loop_count = 0;
+
+    //게임 루프
+    requestAnimationFrame(
+            function loop() {
+
+                var deltaTime = mytimer.getDeltaTime();
+                frame_total += Math.round(1.0 / deltaTime);
+
+                loop_count++;
+
+                framerate_info.innerText = Math.round(frame_total / loop_count);
+
+                if(!applier.stop) {
+                    applier(deltaTime);
+                }
+
+
+                //씬메니져 업데이트
+                //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+                Smgr.updateAll();
+
+                requestAnimationFrame(loop);
+
+            }
+
+    );
+
+</script>
+
+
+
+</body>
+</html>

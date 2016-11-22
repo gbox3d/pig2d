@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf8" >
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <title> 편집 사각형 이동하기 예제 </title>
+
+    <script src="../../../libs/kinetics/kinetic-v4.5.2.js"></script>
+    <script src="../../../libs/jquery-2.0.3.min.js"></script>
+    <script src="../../../libs/pig2d/js/core.js"></script>
+    <script src="../../../libs/kinetics/kinetic.util.js"></script>
+
+    <style>
+        #img_view {
+            margin: 0px;
+            width: 320px;
+            height: 240px;
+            border: 1px solid #000000;
+        }
+    </style>
+
+    <script>
+
+        $(function() {
+
+            var stage = new Kinetic.Stage({
+                container : "img_view",
+                width : 320,
+                height : 240
+            });
+
+            var layer = new Kinetic.Layer({
+                name : 'root_layer'
+            });
+
+            var cutter = new gbox3d.Kinetic.Util.Cutter(layer);
+
+            $('#btn_test2').on('click',function() {
+                console.log( cutter.getRect());
+
+            }   );
+
+            $('#btn_test').on('click',function() {
+
+
+                var cut_rect = cutter.getRect();
+
+                cutter.setRect(
+                    new gbox3d.core.Vect2d(50,50),
+                    new gbox3d.core.Vect2d(100,100)
+                );
+
+                console.log( cutter.getRect());
+
+                layer.draw();
+
+
+                $('#text_rgn').text(JSON.stringify(cutter.getRect()));
+
+
+            });
+
+            //스테이지 붙이기
+            stage.add(layer);
+        });
+
+    </script>
+
+
+</head>
+<body>
+
+<button id="btn_test"> 영역 이동 </button>
+<button id="btn_test2"> 영역  </button>
+<p id = 'text_rgn'>{}</p>
+
+<div id="img_view"></div>
+
+</body>
+</html>

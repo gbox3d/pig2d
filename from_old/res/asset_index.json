@@ -1,0 +1,18 @@
+{
+    "asset_path" : "../../res/",
+    "img_files" : [
+
+        "/ffight/FF_Guy.png"
+
+
+
+    ],
+    "animation_files" : [
+
+        "/ffight/ffguy.json"
+
+    ],
+    "objects" : {
+        "ff_guy":{"texture":0,"animation" : 0}
+    }
+}

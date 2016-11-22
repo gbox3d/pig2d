@@ -1,0 +1,39 @@
+/* 
+    Document   : core
+    Created on : 2012. 11. 24, 오후 1:37:22
+    Author     : gbox3d
+    Description:
+        Purpose of the stylesheet follows.
+*/
+
+/*
+root {
+    display: block;
+}
+*/
+
+* {
+    -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+
+.pig2d-fullscreen {
+    position: absolute;
+    width: 100%;
+    left: 0px;
+    top : 0px;
+    bottom: 0px;
+    background-color : #9966FF;
+
+}
+
+.pig2d-fullscreen div {
+    position: absolute;
+}
+
+.pig2d-node {
+    position: absolute;
+    margin: 0px;
+    -webkit-transform-origin : 0% 0%;
+
+}
+

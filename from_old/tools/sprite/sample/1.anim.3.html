@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title> simple sample </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../../libs/jquery-2.0.3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../../libs/backbone/underscore-min.js"></script>
+    <script src="../../../libs/backbone/backbone-min.js"></script>
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+
+    <script src="../../../libs/pig2d/js/core.js"></script>
+    <script src="../../../libs/pig2d/js/node2d.js"></script>
+
+
+    <script src="ani_data.js"></script>
+
+
+</head>
+
+<body>
+
+<div id="page-start" style="
+    height: 240px;
+    border: 1px solid;
+    display: -webkit-box;
+				-webkit-box-orient: horizontal;
+				-webkit-box-pack: center; /* 수평 정렬기준  */
+				-webkit-box-align: center;
+" >
+
+    <p id="text-loading-progress" >loading...</p>
+
+</div>
+
+
+<div id="page-game-play" style="display: none" >
+    <p id ='text-framerate-info' style="position: absolute" >frame rate</p>
+
+</div>
+
+<script>
+
+
+    var TheApp = {
+
+    }
+
+    var page_start = document.getElementById('page-start');
+    var page_game_play = document.getElementById('page-game-play');
+    var progree_info = document.getElementById('text-loading-progress');
+
+    //씬메니져 생성하기
+    var Smgr = null;
+
+    var img_files = [
+        'mushroom.png',
+        'jaint_drill.png',
+        'entree.png',
+        'goblinjr.png',
+        'gone.png',
+        'gorgon.png',
+        'hipiqeen.png',
+        'orc.png',
+        'slime.png',
+        'troll.png'
+    ];
+
+    //var textures = {};
+
+    var datas = [
+        Animation_Data.mushroome,
+        Animation_Data.jaint_drill,
+        Animation_Data.entree,
+        Animation_Data.goblinjr,
+        Animation_Data.gone,
+        Animation_Data.gorgon,
+        Animation_Data.hipiqeen,
+        Animation_Data.orc,
+        Animation_Data.slime,
+        Animation_Data.troll
+    ];
+
+
+
+//    var AnimationNodes = []
+
+    function OnLoadComplete(evt) {
+
+        var textures = evt.textures;
+
+        page_start.style.display = 'none';
+        page_game_play.style.display = 'block';
+
+        Smgr = new Pig2d.SceneManager({
+            container : page_game_play
+            ,window_size : { //클리핑 범위 지정
+                width : 320,
+                height: 240
+            }
+        });
+
+       // console.log(textures);
+
+        for(var i =0;i< datas.length ;i++) {
+
+            var node = new Pig2d.node();
+            var model =  new Pig2d.SpriteModel( {
+                        data : datas[i],
+                        imgObj : textures[img_files[i]]
+                    }
+            );
+            node.set(
+                    { model : model }
+            );
+            node.get('model').setPosition(i*30,120);
+            node.get('model').setupAnimation({
+                startFrame:10,
+                endFrame:19
+            });
+
+            //AnimationNodes.push(node);
+            Smgr.add(node);
+        }
+
+        Smgr.updateAll();
+        loop();
+    }
+
+
+    Pig2d.util.SetupAsset({
+        asset_path : "../../../res/gc/",
+        img_files : img_files,
+        OnLoadComplete : OnLoadComplete
+
+    });
+
+
+    //타이머 설정 및 퍼포먼트 테스트용 정보
+    var mytimer = new gbox3d.core.Timer();
+    var framerate_info = document.querySelector("#text-framerate-info");
+    var frame_total = 0;
+    var loop_count = 0;
+
+
+    //게임 루프
+    function loop() {
+
+        var deltaTime = mytimer.getDeltaTime();
+
+        if(deltaTime != 0 )
+            frame_total += Math.round(1.0 / deltaTime);
+
+        loop_count++;
+
+        framerate_info.innerText = Math.round(frame_total / loop_count) + '/' + loop_count;
+
+        //씬메니져 업데이트
+        //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+
+        if(Smgr != null) {
+
+            //트래버스 함수를 이용 해서
+            //Smgr.updateAll(deltaTime); 과 똑같은 기능을 수행함
+
+            Smgr.get('rootNode').traverse(function(param) {
+
+                this.get('model').updateCSS(deltaTime);
+
+
+            },{
+                deltaTime: deltaTime
+            });
+
+
+
+        }
+
+        requestAnimationFrame(loop);
+
+    }
+
+</script>
+
+
+
+</body>
+</html>

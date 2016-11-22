@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title> pig editor </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/extra/jquery-2.0.3.min.js"></script>
+    <script src="../../libs/extra/d3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <script src="../../libs/backbone/backbone.js"></script>
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+
+    <script src="../../libs/pig2d/js/controller.js"></script>
+    <script src="../../libs/pig2d/js/scroller.js"></script>
+    <script src="../../libs/pig2d/js/particle.js"></script>
+    <script src="../../libs/pig2d/js/system.js"></script>
+    <script src="../../libs/pig2d/js/serialize.js"></script>
+
+    <script src="../../libs/extra/FileSaver.js"></script>
+
+
+    <!--<link rel="stylesheet" href="../plugin/css_effect/test1.css" />-->
+    <!--<link rel="stylesheet" href="../plugin/css_effect/effect.css" />-->
+    <!--<link rel="stylesheet" href="../plugin/css_effect/screen_helper.css" />-->
+
+</head>
+
+<body>
+
+<div style="overflow: auto;">
+
+    <!--메인유아이패널-->
+    <div id="main-control-panel" style="float: left;width: 300px;height: 800px;border: solid 1px;overflow-x :hidden ;overflow-y: scroll;">
+
+        <div class="main-menu" style="height: 200px;overflow: auto;border: 1px solid;" >
+            <div class="btn-load" >
+                load
+                <!--<input type="file" style="display: none;"> load -->
+            </div>
+            <div class="btn-save"> save </div>
+            <div style="border: 1px solid;">
+                load asset
+                <input class="load-asset"  type="file" >
+            </div>
+
+            <div class="cmd-group" >
+
+            </div>
+
+            <div>
+                <textarea class="cmd" style="width: 90%;height: 80px;" ></textarea>
+                <div><button class="btn-run-cmd">run</button></div>
+            </div>
+
+        </div>
+
+        <div class="prefeb-list" style="height: 200px;overflow: auto;border: 1px solid;">
+            <p class="select"></p>
+            <ul></ul>
+        </div>
+
+        <div class="object-list" style="height: 200px;overflow: auto; border: 1px solid;white-space: nowrap;">
+
+            <ul class="object-list-root" ></ul>
+
+        </div>
+
+
+        <div class="object-info" style="height: 200px;overflow: auto;border: 1px solid;" >
+
+            <div> 아이디 : <input class="id" > </div>
+            <div> name : <input class="name" > </div>
+            <div> tag : <input class="tag" > </div>
+
+            <div> 위치 : <input class="position" > </div>
+            <div> 각도 : <input type="range" class="angle" min="0" max="360" value="0" > </div>
+            <div> 확대비율 : <input class="scale" > </div>
+            <div> z-order : <input class="zindex" > </div>
+            <div> flipX : <input class="flipX" type="checkbox" > </div>
+            <div> flipY : <input class="flipY" type="checkbox" > </div>
+            <div> show : <input class="show" type="checkbox" >  </div>
+
+            <div> 캔버스크기 : <input class="canvas-size" > </div>
+
+            <div> frame : <input class="frame-index" value="0" >  </div>
+            <div> frame_range : <input class="frame-range" >  </div>
+            <div> play status : <input class="play-status" >  </div>
+            <div> loop : <input class="animation-loop" type="checkbox" >  </div>
+
+
+            <div> html : <textarea class="innerhtml" style="width: 90%;height: 80px;" ></textarea> </div>
+            <div> CSS : <textarea class="cssobject" style="width: 90%;height: 80px;" ></textarea> </div>
+
+            <div><button class="btn-apply" >apply</button></div>
+
+        </div>
+
+    </div>
+
+<!--메인편집화면-->
+    <div id="scene-view" style="float: right; width: 600px;height: 600px">
+
+        <div class="control-pannel" >
+            <div class="camera-zoomin">
+            카메라 줌인 : <input  type="range" min="0" max="300" value="100" style="width: 60%;" ><span></span>
+            </div>
+
+        </div>
+
+        <div id="main-window" style="width: 512px;height: 512px">
+            <p id ='text-framerate-info' style="position: absolute;z-index: 5;" ></p>
+
+            <svg class="grid-sprite" style="position: absolute;">
+
+                <g class="detail" ></g>
+
+                <g class="axies"></g>
+
+            </svg>
+
+            <div id="selection_hud" style="position:absolute;border: 1px solid;visibility: hidden" >
+                <button class="btn-del">X</button>
+            </div>
+
+        </div>
+
+
+    </div>
+
+    <!--파일 다이얼 로그 -->
+    <div id="file-dialogue" style="
+    display: none;
+    position: absolute;
+    background-color: #aaaaaa;
+    " >
+
+        <div class="file-listview" >
+            <div>
+                <button class="btn-go-home-dir" >[Home]</button>
+                <button class="btn-go-parent-dir" >[..]</button>
+            </div>
+
+            <div style="width: 300px;height: 200px;border: 1px solid;margin: 10px;
+        overflow: auto;
+        white-space: nowrap;
+        " >
+                <ul class="file-list" ></ul>
+
+            </div>
+
+
+            <div>
+                <div>
+                    <input class="file-name" />
+                    <button class="btn-sel" >select</button>
+                    <button class="btn-cancel" >cancel</button>
+                </div>
+            </div>
+
+        </div>
+
+
+
+    </div>
+
+
+</div>
+
+<script src="app.js"></script>
+
+<!--<script src="../plugin/battle_logic.js"></script>-->
+<!--<script src="../plugin/network.js"></script>-->
+<!--<script src="../plugin/app.js"></script>-->
+
+<script src="scene_view/controll_pannel.js"></script>
+<script src="scene_view/main_window.js"></script>
+<script src="main_control_panel/main_menu.js"></script>
+<script src="main_control_panel/object_info.js"></script>
+
+<script src="dialogue/fileDlg.js"></script>
+
+<script src="main.js"> </script>
+
+
+</body>
+</html>

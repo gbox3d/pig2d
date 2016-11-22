@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title>  </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+    <script src="../../libs/extra/d3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <script src="../../libs/backbone/backbone.js"></script>
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+
+    <script src="../../libs/pig2d/js/controller.js"></script>
+    <script src="../../libs/pig2d/js/scroller.js"></script>
+    <script src="../../libs/pig2d/js/particle.js"></script>
+    <script src="../../libs/pig2d/js/system.js"></script>
+
+
+</head>
+
+<body style="margin: 0px;" >
+
+<div style="overflow: auto;">
+
+    <div id="main-window" style="width: 320px;height: 320px;">
+        <p id ='text-framerate-info' style="position: absolute;z-index: 5;" ></p>
+        <p id ='text-system-info' style="position: absolute;-webkit-transform:translate(0px,20px); z-index: 5;" ></p>
+    </div>
+
+    <button id="btn-test1" >test1</button>
+    <button id="btn-test2" >test2</button>
+    <button id="btn-test3" >test3</button>
+
+    <p id='text-log'></p>
+
+</div>
+
+<script>
+
+    var theApp = {};
+    theApp.Smgr = new Pig2d.SceneManager({
+        container :  document.querySelector('#main-window'),
+        window_size : { //클리핑 범위 지정
+            width : 320,
+            height: 320
+        },
+        bkg_color: '#aaaaaa'
+    });
+
+    theApp.resMng = {
+
+        animations : []
+    };
+
+    var text_log_element = document.querySelector('#text-log');
+
+    var TextureCache = function() {
+
+        this.textures = [];
+
+        var that = this;
+
+        this.addTexture = function(param) {
+            var imgObj = new Image();
+            imgObj.onload = function() {
+
+                that.textures.push(this);
+                if(param.name)
+                    that.textures[param.name] = that.textures.length-1;
+
+                if(param.onComplete) {
+                    param.onComplete(this);
+                }
+
+                //console.log(that.textures);
+
+            }
+
+            imgObj.src = param.src;
+        }
+    }
+
+    var framerate_info_element = document.querySelector("#text-framerate-info");
+    var frame_total = 0;
+    var loop_count = 0;
+    theApp.resMng.texCache = new TextureCache();
+
+    (function() {
+        var count = 0;
+        var loadcount = 0;
+        document.querySelector('#btn-test1').addEventListener('click',function() {
+
+            for(var i=0;i<10;i++) {
+                theApp.resMng.texCache.addTexture({
+                    src : '../../res/' + theApp.prefeb_list[count].texture,
+                    name : theApp.prefeb_list[count].texture,
+                    onComplete : function(imgObj) {
+
+                        loadcount++;
+                        text_log_element.innerText = loadcount;
+
+                    }
+                });
+                count++;
+            }
+        });
+
+        document.querySelector('#btn-test2').addEventListener('click',function() {
+
+            var name = theApp.prefeb_list[objCount % 10].name;
+
+            addSprite({
+                name : name,
+                x:gbox3d.core.randomIntFromTo(50,320-50),
+                y:gbox3d.core.randomIntFromTo(50,240-50)
+            });
+
+            frame_total = 0;
+            loop_count = 0;
+
+
+
+            objCount++;
+            //text_log_element.innerText = objCount;
+
+        });
+
+        var objCount=0;
+        function increaseObj() {
+
+            if(Pig2d.system.currentFPS > 20) {
+                for(var i=0;i<5;i++) {
+
+                    var name = theApp.prefeb_list[0].name;
+
+                    addSprite({
+                        name : 'unit_2',
+                        x:gbox3d.core.randomIntFromTo(0,320),
+                        y:gbox3d.core.randomIntFromTo(0,240)
+                    });
+
+                    objCount++;
+                    //text_log_element.innerText = objCount;
+                }
+            }
+            Pig2d.system.currentFPS = 0;
+
+
+            if(objCount < 12) {
+
+                setTimeout(increaseObj,1000);
+
+            }
+
+
+        }
+
+
+
+        document.querySelector('#btn-test3').addEventListener('click',function() {
+
+            increaseObj();
+
+            //setInterval(increaseObj,5000);
+
+        });
+
+    })();
+
+
+
+    $.ajax({
+        type : "GET",
+        url : "test2.json",
+        dataType : "json",
+        success : function(data,status,xhr) {
+
+            theApp.prefeb_list = data.objects;
+            //theApp.prefeb_list.animations = [];
+
+            for(var i=0;i<theApp.prefeb_list.length;i++) {
+                theApp.prefeb_list[theApp.prefeb_list[i].name] = i;
+            }
+
+            console.log(theApp.prefeb_list);
+
+            var asset_path = '../../res/'
+            var animation_files = data.animation_files;
+
+            //프레임당 비트 블릿량 평균
+            function calcBBASize(data) {
+
+                var total = 0;
+                for(var i=0;i<data.frames.length;i++) {
+
+                    total += data.frames[0].sheets[0].width * data.frames[0].sheets[0].height;
+
+                }
+
+                return total / data.frames.length;
+            }
+
+
+            var i=0;
+            (function preLoadAnimation(filename,data) {
+
+                if(data) {
+
+                    console.log( filename + ' : ' + calcBBASize(data));
+
+                    data.bba_size = calcBBASize(data);
+                    theApp.resMng.animations.push(data);
+                    theApp.resMng.animations[filename] = theApp.resMng.animations.length-1;
+
+                }
+
+                if(animation_files.length <= i) {
+
+                    console.log('load complete');
+                    console.log(theApp.resMng);
+                }
+                else {
+                    var url = asset_path + animation_files[i];
+                    var file_name = animation_files[i];
+                    i++;
+                    $.ajax({
+                        type : "GET",
+                        url : url,
+                        dataType : "json",
+                        success : preLoadAnimation.bind(this,file_name),
+                        error : function(evt,status,xhr) {
+                            console.log(status);
+                        }
+                    });
+                }
+
+            })(asset_path + animation_files[i]);
+
+        },
+        error : function(evt,status,xhr) {
+
+            console.log(status);
+
+        }
+    });
+
+
+    var total_bba = 0;
+
+
+    function addSprite(param) {
+
+//        function name2obj(name) {
+//            for(var i=0;i<theApp.prefeb_list.length;i++) {
+//                if(theApp.prefeb_list[i].name == name) {
+//                    return theApp.prefeb_list[i];
+//                }
+//            }
+//        }
+
+        var parent = param.parent || theApp.Smgr.getRootNode();
+
+        var name = param.name;
+        //var prefeb =theApp.current_select_prefeb;
+
+        if(name) {
+            prefeb = theApp.prefeb_list[theApp.prefeb_list[name]];
+        }
+
+        var texture  =theApp.resMng.texCache.textures[ theApp.resMng.texCache.textures[prefeb.texture] ];
+
+        if(!texture) {
+
+            console.log(prefeb.texture + ' undefined!');
+
+        }
+
+        //bba량 계산
+
+        var bba = theApp.resMng.animations[ theApp.resMng.animations[prefeb.animation]].bba_size;
+        total_bba += bba;
+        text_log_element.innerText = total_bba;
+
+        console.log(bba);
+
+
+
+        var node_sprite = Pig2d.util.createSprite(
+                {
+                    texture :texture,
+                    animation : theApp.resMng.animations[ theApp.resMng.animations[prefeb.animation] ]
+
+                }
+        );
+        node_sprite.get('model').setPosition(param.x,param.y);
+
+        //인자들은 기본값은으로 세팅
+        node_sprite.get('model').setupAnimation({
+            isAnimationLoop : false
+        });
+
+        node_sprite.get('model').setScale(0.5,0.5);
+
+        parent.add(node_sprite);
+        node_sprite.update(true,0);
+
+    }
+
+
+
+    //게임루프시작
+    Pig2d.system.startGameLoop({
+
+
+        gameLoopCallBack : function(deltaTime) {
+
+            if(deltaTime != 0 )
+                frame_total += Math.round(1.0 / deltaTime);
+
+            //지연이 너무 크면 리셋
+            if(deltaTime > 0.3) {
+                frame_total = 0;
+                loop_count = 0;
+
+            }
+
+            loop_count++;
+
+            framerate_info_element.innerText = Math.round(frame_total / loop_count) + '/' + loop_count;
+
+            //씬메니져 업데이트
+            //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+            theApp.Smgr.updateAll(deltaTime);
+
+        }
+
+
+    });
+</script>
+
+
+
+</body>
+</html>

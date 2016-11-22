@@ -1,0 +1,9 @@
+{
+    "add_dummy" : "theApp.addDummyNode({x:0,y:0,name:'dummy_node'});",
+    "add_custom_html" : "theApp.addCustomHtmlNode({x:0,y:0,name:'html_node',html:'<div>html node</div>'});",
+    "add_html" : "theApp.addHtmlNode({x:0,y:0,name:'html_node',html:'<div>html node</div>'});",
+    "refresh" : "theApp.refreshObjectListView()",
+    "clone" : "theApp.CloneNode({node : theApp.CurrentNode})",
+    "DoBattle" : "theApp.battleSceneMng.executeBattle({ base_url : 'http://175.202.108.194:58083',battle_root : theApp.CurrentNode});"
+
+}

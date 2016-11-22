@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title> mouse spot control </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <script src="../../libs/backbone/backbone.js"></script>
+
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <!--<script src="../../libs/gl-matrix-min.js"></script>-->
+
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+
+    <script src="../../libs/pig2d/js/controller.js"></script>
+    <script src="../../libs/pig2d/js/scroller.js"></script>
+    <script src="../../libs/pig2d/js/system.js"></script>
+
+
+</head>
+
+<body style="width: 320px;
+    margin: auto;">
+
+<div id="main-window" >
+    <p id ='text-framerate-info' style="position: absolute;z-index: 5;" >frame rate</p>
+    <svg style="position: absolute;width : 320px;height :240px;border: 1px solid; z-index: 1" >
+
+        <line x1="0" y1="120" x2="320" y2="120" style="stroke:#000000;"/>
+        <line x1="160" y1="0" x2="160" y2="240" style="stroke:#000000;"/>
+
+    </svg>
+</div>
+
+
+
+<script>
+
+
+
+
+    function OnLoadComplete(evt) {
+
+        //씬메니져 생성하기
+        var Smgr = null;
+
+        var textures = evt.textures;
+        var animations = evt.animations;
+
+        Smgr = new Pig2d.SceneManager({
+            container :  document.querySelector('#main-window'),
+            window_size : { //클리핑 범위 지정
+                width : 320,
+                height: 240
+            }
+        });
+
+        //
+        var scrollobj = new Pig2d.util.scroller.type_finalfight({
+            scroll_center : 160,
+            speed : 100,
+            front_layer : textures['Slum1-1.png'],
+            back_layer : textures['Slum1-2.png'],
+            backlayer_rate : 0.6
+
+        });
+
+        scrollobj.setScrollPosDirect(-64);
+
+
+        //클릭 이벤트
+        document.addEventListener('mousedown',function(evt) {
+            scrollobj.setScrollPos(evt.layerX);
+        });
+        document.addEventListener('touchstart',function(event) {
+
+            event.preventDefault();
+
+            var touch = event.touches[ 0 ];
+
+            touchX = touch.screenX;
+            touchY = touch.screenY;
+
+            scrollobj.setScrollPos(touchX);
+
+        });
+
+        Smgr.add(scrollobj.getRoot());
+
+
+        //게임루프시작
+        Pig2d.system.startGameLoop({
+
+            framerate_info_element : document.querySelector("#text-framerate-info"),
+            gameLoopCallBack : function(deltaTime) {
+
+                //씬메니져 업데이트
+                //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+                Smgr.updateAll(deltaTime);
+
+            },
+            loopCount_limit : 30
+        });
+
+    }
+
+
+    Pig2d.util.SetupAsset({
+        asset_path : "../../res/ffight/",
+        img_files : [
+            "Slum1-1.png",
+            "Slum1-2.png"
+        ],
+        animation_files : [
+        ],
+        OnLoadComplete : OnLoadComplete
+
+    });
+
+
+</script>
+
+
+
+</body>
+</html>

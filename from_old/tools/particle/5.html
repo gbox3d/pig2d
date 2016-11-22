@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title> projectile gun sample </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <script src="../../libs/backbone/backbone.js"></script>
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+
+    <script src="../../libs/pig2d/js/controller.js"></script>
+    <script src="../../libs/pig2d/js/scroller.js"></script>
+    <script src="../../libs/pig2d/js/particle.js"></script>
+
+    <script src="../../libs/pig2d/js/system.js"></script>
+
+
+</head>
+
+<body>
+
+
+<div style="width: 480px; margin: auto;">
+
+    <p id='text-framerate-info'>frame rate</p>
+
+    <div id='game-window' style="
+    position: relative;
+    height :320px; /* 높이를 명시해주어야 영역이 잡혀 유아이가 밑으로 내려감.*/
+    margin-top: 3px;
+    background-color: #bf62ff/*배경색을 정해준다.*/
+    ">
+
+        <svg class='helper-grid' style="position: absolute;height :320px;border: 1px solid;" >
+
+            <line x1="0" y1="160" x2="480" y2="160" style="stroke:#000000;"/>
+            <line x1="240" y1="0" x2="240" y2="320" style="stroke:#000000;"/>
+
+        </svg>
+
+    </div>
+
+    <div id="ui-panel" style="height: 120px;background-color: #dcdcdc;">
+        <div class='fire1' style="margin-top :30px; margin-left: 30px; display: inline-block; width: 60px;height: 60px; background-color: #ff0000"></div>
+        <div class='fire2' style="margin-left: 30px;display: inline-block;width: 60px;height: 60px; background-color: #00ff00"></div>
+        <div class='fire3' style="margin-left: 30px;display: inline-block;width: 60px;height: 60px; background-color: #0000ff"></div>
+    </div>
+
+</div>
+
+<script>
+
+
+
+    function OnLoadComplete(evt) {
+
+        //씬메니져 생성하기
+        var Smgr = null;
+
+        var textures = evt.textures;
+        var animations = evt.animations;
+
+        var window_size = {
+            width : 480,
+            height : 320
+        }
+
+        Smgr = new Pig2d.SceneManager({
+            container :  document.querySelector('#game-window'),
+            window_size: window_size
+        });
+
+        var pt_gun = new Pig2d.Particle.ProjectileGun({
+            parent : Smgr.getRootNode(),
+            bullet : {
+                prefeb : {
+                    texture: textures['effect_test/e/e0.png'],
+                    animation : animations['effect_test/e/e0.json']
+                }
+            },
+            bullet_size: 10 //총알갯수
+        });
+
+        document.querySelector('#ui-panel .fire1').addEventListener('click',function() {
+            pt_gun.Shot({
+                X : gbox3d.core.randomIntFromTo(0,window_size.width),
+                Y : gbox3d.core.randomIntFromTo(0,window_size.height),
+                sprite_data : {
+                    prefeb : {
+                        texture: textures['effect_test/e/e0.png'],
+                        animation : animations['effect_test/e/e0.json']
+                    }
+                }
+            });
+
+        });
+
+        document.querySelector('#ui-panel .fire2').addEventListener('click',function() {
+            pt_gun.Shot({
+                X : gbox3d.core.randomIntFromTo(0,window_size.width),
+                Y : gbox3d.core.randomIntFromTo(0,window_size.height),
+                sprite_data : {
+                    prefeb : {
+                        texture: textures['effect_test/e/e1.png'],
+                        animation : animations['effect_test/e/e1.json']
+                    }
+                }
+            });
+
+        });
+
+        document.querySelector('#ui-panel .fire3').addEventListener('click',function() {
+            pt_gun.Shot({
+                X : gbox3d.core.randomIntFromTo(0,window_size.width),
+                Y : gbox3d.core.randomIntFromTo(0,window_size.height),
+                sprite_data : {
+                    prefeb : {
+                        texture: textures['effect_test/e/e2.png'],
+                        animation : animations['effect_test/e/e2.json']
+                    }
+                }
+            });
+
+        });
+
+        ///////////////////////////////////////////////////////////////
+        //게임루프시작
+        Pig2d.system.startGameLoop({
+
+            framerate_info_element : document.getElementById('text-framerate-info'),
+            gameLoopCallBack : function(deltaTime) {
+                //씬메니져 업데이트
+                //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+                Smgr.updateAll(deltaTime);
+            },
+            loopCount_limit : 30
+        });
+
+    }
+
+
+    Pig2d.util.SetupAsset({
+        asset_path : "../../res/",
+        img_files : [
+            "effect_test/e/e0.png",
+            "effect_test/e/e1.png",
+            "effect_test/e/e2.png",
+            "effect_test/e/e3.png",
+            "effect_test/e/e5.png",
+            "grandchase/effect/png/doom.png"
+        ],
+        animation_files : [
+            "effect_test/e/e0.json",
+            "effect_test/e/e1.json",
+            "effect_test/e/e2.json",
+            "effect_test/e/e3.json",
+            "effect_test/e/e5.json",
+            "grandchase/effect/doom.json"
+        ],
+        OnLoadComplete : OnLoadComplete
+
+    });
+
+
+
+</script>
+
+
+
+</body>
+</html>

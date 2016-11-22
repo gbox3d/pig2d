@@ -1,0 +1,44 @@
+{
+"bones": [
+	{ "name": "root" }
+],
+"slots": [
+	{ "name": "ef1", "bone": "root", "attachment": "e_0_0" }
+],
+"skins": {
+	"default": {
+		"ef1": {
+			"e_0_0": { "x": -2.3, "y": 31.48, "width": 183, "height": 163 },
+			"e_0_1": { "x": -38.01, "y": 60.28, "width": 238, "height": 220 },
+			"e_0_2": { "x": -40.31, "y": 60.28, "width": 258, "height": 215 },
+			"e_0_3": { "x": -52.6, "y": 34.55, "width": 299, "height": 174 },
+			"e_0_4": { "x": -48.38, "y": 37.24, "width": 309, "height": 164 },
+			"e_0_5": { "x": -39.93, "y": 39.93, "width": 285, "height": 166 },
+			"e_0_6": { "x": -26.11, "y": 16.51, "width": 246, "height": 114 }
+		}
+	}
+},
+"events": {},
+"animations": {
+	"animation": {
+		"slots": {
+			"ef1": {
+				"attachment": [
+					{ "time": 0, "name": "e_0_0" },
+					{ "time": 0.0333, "name": "e_0_1" },
+					{ "time": 0.0666, "name": "e_0_2" },
+					{ "time": 0.1, "name": "e_0_3" },
+					{ "time": 0.1333, "name": "e_0_4" },
+					{ "time": 0.1666, "name": "e_0_5" },
+					{ "time": 0.2, "name": "e_0_6" }
+				],
+				"color": [
+					{ "time": 0.0333, "color": "ffffffff", "curve": "stepped" },
+					{ "time": 0.0666, "color": "ffffffff", "curve": "stepped" },
+					{ "time": 0.2, "color": "ffffffff" }
+				]
+			}
+		}
+	}
+}
+}

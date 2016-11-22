@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf8" >
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <title> 선끼리 충돌검사 </title>
+
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/geo2d.js"></script>
+
+</head>
+<body>
+
+<div id="main_window" style="
+            margin: 0px;
+            width: 320px;
+            height: 240px;
+            border: 1px solid;
+            position: relative;
+            ">
+
+    <svg >
+
+        <line x1="10" y1="10" x2="50" y2="50"
+              style="stroke:rgb(0,0,0);stroke-width:2"/>
+
+        <line x1="10" y1="100" x2="150" y2="50"
+              style="stroke:rgb(0,0,0);stroke-width:2"/>
+
+
+        <circle class="anchor" cx="10" cy="10" r='5' fill="red" />
+        <circle class="anchor" cx="50" cy="50" r='5' fill="red" />
+
+        <circle class="anchor" cx="0" cy="0" r='5' fill="blue" />
+
+
+    </svg>
+
+
+</div>
+
+
+<script>
+
+
+
+    var main_window = document.getElementById('main_window');
+
+    function anchor_move(evt) {
+
+        evt.preventDefault();
+
+        var x = parseInt(this.attributes.cx.value);
+        var y = parseInt(this.attributes.cy.value);
+
+        this.attributes.cx.value = x = evt.webkitMovementX + x;
+        this.attributes.cy.value = y = evt.webkitMovementY + y;
+
+
+        var anchors = document.querySelectorAll('svg circle.anchor');
+        var lines = document.querySelectorAll('svg line');
+
+        lines[0].attributes.x1.value = anchors[0].attributes.cx.value;
+        lines[0].attributes.y1.value = anchors[0].attributes.cy.value;
+
+        lines[0].attributes.x2.value = anchors[1].attributes.cx.value;
+        lines[0].attributes.y2.value = anchors[1].attributes.cy.value;
+
+
+        var result = gbox3d.geo.Intersection.intersectLineLine(
+                new gbox3d.core.Vect2d(parseInt(lines[0].attributes.x1.value),parseInt(lines[0].attributes.y1.value)),
+                new gbox3d.core.Vect2d(parseInt(lines[0].attributes.x2.value),parseInt(lines[0].attributes.y2.value)),
+                new gbox3d.core.Vect2d(parseInt(lines[1].attributes.x1.value),parseInt(lines[1].attributes.y1.value)),
+                new gbox3d.core.Vect2d(parseInt(lines[1].attributes.x2.value),parseInt(lines[1].attributes.y2.value))
+        );
+
+        //충돌위치 표시하기
+        if(result.status == 'Intersection') {
+
+            result.points[0].toSVG(anchors[2]);
+
+            //console.log(result.points[0]);
+            //anchors[2].setAttribute('cx',result.points[0].X);
+            //anchors[2].setAttribute('cy',result.points[0].Y);
+        }
+    }
+
+    var movehandler;
+
+    main_window.addEventListener('mousedown',function(evt) {
+
+        evt.preventDefault();
+
+        console.log(evt.target);
+
+        if(evt.target.classList.contains('anchor') == true) {
+            main_window.style.cursor = 'move';
+            movehandler = anchor_move.bind(evt.target);
+            main_window.addEventListener('mousemove',movehandler);
+        }
+    });
+
+    main_window.addEventListener('mouseup',function(evt) {
+        evt.preventDefault();
+
+        main_window.style.cursor = 'default';
+        main_window.removeEventListener('mousemove',movehandler);
+
+    });
+
+
+</script>
+
+
+</body>
+</html>

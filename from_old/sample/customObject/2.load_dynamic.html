@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title>create basic object sample</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+
+    <script src="../../libs/backbone/underscore-min.js"></script>
+    <script src="../../libs/backbone/backbone-min.js"></script>
+
+
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+    <script src="../../libs/pig2d/js/util.js"></script>
+
+    <script src="../../libs/pig2d/js/system.js"></script>
+
+</head>
+
+<body>
+
+<div style="width: 320px; margin: auto;">
+
+    <div id='sprite_window' style="
+    position: relative;
+    height :240px; /* 높이를 명시해주어야 영역이 잡혀 유아이가 밑으로 내려감.*/
+    margin-top: 3px;
+    background-color: #bf62ff/*배경색을 정해준다.*/
+    ">
+
+        <svg class='helper-grid' style="position: absolute;width:320px;height :240px;border: 1px solid;" >
+
+            <line x1="0" y1="120" x2="320" y2="120" style="stroke:#000000;"/>
+            <line x1="160" y1="0" x2="160" y2="240" style="stroke:#000000;"/>
+
+        </svg>
+
+    </div>
+
+    <div id="ui-pannel" style="height: 120px;background-color: #dcdcdc;">
+        <div class='fire1' style="margin-top :30px; margin-left: 30px; display: inline-block; width: 60px;height: 60px; background-color: #ff0000"></div>
+        <div class='fire2' style="margin-left: 30px;display: inline-block;width: 60px;height: 60px; background-color: #00ff00"></div>
+        <div class='fire3' style="margin-left: 30px;display: inline-block;width: 60px;height: 60px; background-color: #0000ff"></div>
+    </div>
+
+</div>
+
+
+
+<script>
+
+    //씬메니져 생성하기
+    var Smgr = new Pig2d.SceneManager({
+        container : document.querySelector('#sprite_window')
+        ,window_size : { //클리핑 범위 지정
+            width : 320,
+            height: 240
+        }
+    });
+
+    var node = Pig2d.util.createDomElement({
+        url : './redbox.dom.html',
+        rootName : '.red-box', //루트가 노드의 샐랙터 문자
+        callback : function() {
+
+        }
+    });
+    node.get('model').setPosition(160,120);
+    Smgr.add(node);
+
+    //게임루프시작
+    Pig2d.system.startGameLoop({
+
+        gameLoopCallBack : function(deltaTime) {
+
+            node.get('model').rotate(deltaTime * 90);
+
+            //씬메니져 업데이트
+            //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+            Smgr.updateAll(deltaTime);
+
+        }
+    });
+
+
+
+
+
+</script>
+
+
+
+</body>
+</html>

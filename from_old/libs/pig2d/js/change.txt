@@ -1,0 +1,49 @@
+-15.1.17
+
+Pig2d.util 파일 분리
+
+함수 추가
+Pig2d.util.createDynamicTextureNode
+Pig2d.util.createDomElement
+
+
+
+-13.11.24
+
+향성관리용 시리얼라이재이션기능추가
+(serialize.js)
+
+-13.10.1?
+
+마우스 스팟 컨트롤러 speed 관련 버그 해결
+
+- 13.10.13
+기하연산 라이브러리 geo2d.js 추가
+
+- 13.10.3
+
+zindex 샘플 추가
+씬매니져에서 오브잭트를 지우기전에 사용하는 model.destroy 함수추가
+
+ -13.9.22
+
+gl-matrix 종속성 제거 , 대신 webkitCSSMatrix 적용
+
+ -13.9.5
+ backbone 1.0.0 버전으로 업글
+
+ -13.9.2
+ 씬 메니져 클리핑 영역 지정추가
+
+ -13.8.27
+ node.removeChild 기능추가
+ node.show
+
+
+ * -13. 8.14
+ * SlotSpriteModel
+ * animation
+ * cloning
+ *
+ * -13.6.7
+ * 미러링 기능추가 (flipX,flipY 속성)

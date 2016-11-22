@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <!--
+
+    foxEditor is html5 sprite editor
+
+    -->
+    <meta charset="utf8" >
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <title> fox Editor v1.1.0131113 </title>
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+    <script src="../../libs/extra/d3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <script src="../../libs/backbone/backbone.js"></script>
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <!--<script src="../../libs/gl-matrix.js"></script>-->
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+
+
+    <script src="../../libs/kinetics/kinetic-v4.5.2.js"></script>
+    <script src="../../libs/kinetics/kinetic.util.js"></script>
+
+    <!--file 처리-->
+    <script src="../../libs/extra/FileSaver.js"></script>
+
+
+
+
+</head>
+
+<body>
+
+<div style="position:absolute;width: 1030px;margin: auto;" >
+
+    <!--sprite 미리보기-->
+    <div id="window-sprite-preview" style="visibility: hidden;position: absolute; width: 512px;height: 512px;border: 1px solid; z-index: 10;" >
+    </div>
+
+    <!--이미지 편집창-->
+    <div style="display: inline-block;width: 512px;" >
+        <div id='img_view-control' style="
+        position: absolute;
+        height: 100px;
+        top:5px;">
+            <div>
+                <input id='inp-cutter-rgn' style="width: 70%;margin: auto" >
+                <button style="width: 20%;margin: auto" id='btn-rgn-set' >set</button>
+            </div>
+            <input type="file" id="inp-select-files" name="files[]" multiple />
+
+        </div>
+
+        <div id="main_window" style="
+            position: absolute;
+            top : 100px;
+            margin: 0px;
+            width: 512px;
+            height: 512px;
+            overflow: auto;
+            border: 1px solid #000000;" >
+
+            <div id="img_view" style="position: absolute;
+                margin: 0px;">
+            </div>
+
+            <div id="kinetic_stage" style="position: absolute;
+                margin: 0px;
+                width: inherit;
+            height: 512px;" ></div>
+        </div>
+    </div>
+
+    <!--스프라이트편집창-->
+    <div style="display: inline-block;width: 512px">
+
+        <div id='control-sprite-frame' style="width: inherit; margin-top: 3px; border: 1px solid">
+
+            <div>
+                <input id="inp-preview-range" value='{"start":0,"end":9}'>
+                <button id="btn-preview-play" >play</button>
+            </div>
+            <div>
+                <button id="btn-add-frame" >add</button>
+                <button id="btn-ins-frame" >ins</button>
+                <button id="btn-del-frame" >del</button>
+
+                <span><input id="check-overlay" type="checkbox">overlay</span>
+            </div>
+
+
+            <input id='slider-frame-select' style="width: 80%" type="range" value="0" min="0" max="0"><span class="frameindex" style="width: 10%;display: inline-block" >0</span></br>
+
+            <div>
+                delay :  <input id='inp-framedelay' style="width: 80%" value="100">
+            </div>
+            <div>
+                center :  <input id='inp-center-pos' style="width: 50%" ><button id='btn-set-center-pos' >set</button>
+            </div>
+            <div>
+                grid :  <input class='chk-grid-show' type="checkbox" ><input class="grid-size" value="32"> <input class="grid-color" type="color" value="#00ff00">
+            </div>
+        </div>
+
+        <div id='sprite_window' style="
+            position: relative;
+            margin-top: 3px;
+            width: inherit;
+            height: 512px;
+            border: 1px solid #000000;
+            overflow: hidden;
+    ">
+
+            <div class="camera" style="position: absolute;
+            width: inherit;
+            height: inherit;">
+                <div id='overlay-sheet-root' style="position: absolute;" ></div>
+                <div id='sheet-root' style="position: absolute;" ></div>
+                <svg class="grid-sprite" style="position: absolute;width :512px;height: 512px;">
+
+                    <g class="detail" ></g>
+
+                    <g class="axies"></g>
+                    <!--<line x1="0" y1="256" x2="512" y2="256" style="stroke:#000000;"/>-->
+                    <!--<line x1="256" y1="0" x2="256" y2="512" style="stroke:#000000;"/>-->
+
+                </svg>
+                <div id="kinetic_stage_editor" style="position: absolute;" ></div>
+            </div>
+
+        </div>
+
+
+    </div>
+    <div style="width: inherit;" >
+
+        <div id='control-file' style="width: 50%; margin-top: 3px; border: 1px solid;display: inline-block;" >
+
+            <div>
+                <button class="btn-export" >export</button>
+                <button class="btn-save" >save</button>
+            </div>
+
+            <div>
+                <button class="btn-import" >import</button>
+                <input type="file" class="inp-load-files" name="files[]" multiple />
+            </div>
+
+            <textarea class='textarea-export' style="margin: auto; display: block; height: 100px;width: 80%" ></textarea>
+
+        </div>
+
+        <div id='control-prefeb-list' style="width: 49%; border: 1px solid;display: inline-block;" >
+
+            <select class="sel-prefeb" ></select>
+
+            <input type="file" class="inp-load-files" name="files[]" multiple />
+            <br/>
+            <button class="btn_batch"> 일괄적용 </button>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="camera.js"></script>
+<script src="app.js"> </script>
+<script src="main.js"> </script>
+
+
+
+</body>
+</html>

@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta charset="utf8" >
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <title> 스프라이트 툴</title>
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <!--<script src="../../libs/backbone/json2.js"></script>-->
+    <script src="../../libs/backbone/backbone.js"></script>
+
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <!--<script src="../../libs/gl-matrix.js"></script>-->
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+
+
+    <script src="../../libs/kinetics/kinetic-v4.5.2.js"></script>
+    <script src="../../libs/kinetics/kinetic.util.js"></script>
+
+    <style>
+
+        #main_window {
+            position: relative;
+            /*overflow: auto;*/
+            width: 100%;
+            height: 240px;
+            overflow: auto;
+            border: 1px solid #000000;
+
+        }
+
+
+        #main_window #img_view {
+            position: absolute;
+            margin: 0px;
+
+            /*width: 588px;*/
+            /*height: 1751px;*/
+            /*background-image: url(.);*/
+        }
+
+        #main_window #kinetic_stage {
+            position: absolute;
+            margin: 0px;
+            width: 100%;
+            height: 240px;
+
+        }
+
+        #sprite_window {
+            position: relative;
+            width: 100%;
+            height: 240px;
+            border: 1px solid #000000;
+            /*top: 240px;*/
+
+        }
+
+        #sheet-root .sheet {
+            position: absolute;
+            /*background-image: url(../res/Genjuro.gif);*/
+        }
+
+
+    </style>
+
+    <script>
+
+        var App = {
+            editor_info : {
+                width : 320,
+                height : 240
+            }
+        };
+
+        App.SpriteData = {
+            name : "",
+            frames : []
+        };
+
+        //시작용 하나추가..
+        App.SpriteData.frames.push({
+
+            sheets : []
+
+        });
+
+
+        $(function() {
+
+            var stage = new Kinetic.Stage({
+                container : "kinetic_stage",
+                width : 320,
+                height : 240
+            });
+
+            var layer = new Kinetic.Layer({
+                name : 'root_layer'
+            });
+            //스테이지 붙이기
+            stage.add(layer);
+
+
+
+            var stage_editor = new Kinetic.Stage({
+                container : "kinetic_stage_editor",
+                width : 320,
+                height : 240
+            });
+
+            var layer_editor = new Kinetic.Layer({
+                name : 'root_layer2'
+            });
+            stage_editor.add(layer_editor);
+
+
+
+
+            //툴 메인
+            //////////////////////////////////////
+            (function() {
+
+                var current_texture_url = $('#inp-textureurl').val();
+                var scrollPos={x:0,y:0};
+                var cutter = new gbox3d.Kinetic.Util.Cutter(layer);
+                var sheeter = new gbox3d.Kinetic.Util.Sheeter(
+                        {
+                            layer : layer_editor
+                        }
+                );
+
+                var current_frame_index = 0;
+                var current_sheet_element = null;
+
+
+                $('#main_window').on('scroll',function(evt) {
+
+
+                    $('#kinetic_stage').css('top',  evt.currentTarget.scrollTop + 'px');
+                    $('#kinetic_stage').css('left',  evt.currentTarget.scrollLeft + 'px');
+
+                    scrollPos.y = evt.currentTarget.scrollTop;
+                    scrollPos.x = evt.currentTarget.scrollLeft;
+
+                    if(current_sheet_element != null) {
+                        updateSheet(current_sheet_element);
+                    }
+
+                });
+
+                //편집창 업데이트
+                function updateSheet(sheetObj) {
+
+                    var sheet = sheetObj
+                    var cut_rect = cutter.getRect(scrollPos);
+
+                    $('#text_rgn').text(JSON.stringify(cutter.getRect(scrollPos)));
+
+                    $(sheet).css('width',cut_rect.width+'px');
+                    $(sheet).css('height',cut_rect.height+'px');
+
+                    $(sheet).css('background-position',
+                            '-' + cut_rect.sx + 'px -' + cut_rect.sy + 'px' );
+
+
+                    sheeter.setRect({
+                        start : new gbox3d.core.Vect2d(0,0),
+                        end : new gbox3d.core.Vect2d(cut_rect.width,cut_rect.height)
+                    });
+
+                    layer_editor.draw();
+                }
+
+
+                //시트추가하기
+                function addSheet() {
+                    if(current_sheet_element == null) {
+
+                        current_sheet_element = $('<div></div>')
+                                .addClass("sheet")
+                                .addClass("editing")
+                                .appendTo('#sheet-root');
+                    }
+
+                    else {
+
+                        current_sheet_element.removeClass("editing");
+                        current_sheet_element.addClass("edited");
+
+                        current_sheet_element = $('<div></div>')
+                                .addClass("sheet")
+                                .addClass("editing")
+                                .appendTo('#sheet-root');
+
+                    }
+
+
+                    current_sheet_element.data('texture',current_texture_url);
+                    //console.log(current_sheet_element.data('texture'));
+                    current_sheet_element.css('background-image','url('+ App.imgObj.src + ')')
+
+                    sheeter.show();
+                    sheeter.setCurrentNode(current_sheet_element);
+                    updateSheet(current_sheet_element);
+
+                }
+
+                /////////////////////////////////
+                //
+                $('#btn-add-sheet').on('click',function() {
+
+//                    addframe();
+                    addSheet();
+
+                }   );
+                $('#btn-add-frame-sheet').on('click',function() {
+
+                    addSheet();
+                    addFrame();
+
+
+                }   );
+                ////////////////////
+
+
+                function getCollisionArea(node) {
+
+                    var width =  parseInt( node.css('width').slice(0,-2));
+                    var height = parseInt (node.css('height').slice(0,-2));
+
+                    //console.log(node.css('-webkit-transform'));
+
+                    var sx,sy
+                    var strmat = node.css('-webkit-transform');
+                    if(strmat == 'none') {
+                        sx = 0;
+                        sy = 0;
+
+                    }
+                    else {
+
+                        strmat = strmat.slice(0,-1);
+                        strmat = strmat.slice(7,strmat.length);
+
+                        var temp = strmat.split(',');
+
+                        sx = parseInt( temp[4]);
+                        sy = parseInt( temp[5] );
+
+                        //console.log(strmat);
+                    }
+
+                    return new gbox3d.core.Box2d({
+
+                        topleft :  new gbox3d.core.Vect2d(sx,sy),
+                        bottomright: new gbox3d.core.Vect2d(sx+width,sy+height)
+
+                    });
+                }
+                /////
+
+
+                //스프라이트창
+                $('#sprite_window').on('click',function(evt) {
+
+                    //console.log(evt.offsetX);
+
+                    var sheet_nodes = $('#sheet-root .sheet');
+
+                    for(var i=0;i<sheet_nodes.length;i++) {
+
+                        var node =  $(sheet_nodes[i]);
+                        var area = getCollisionArea(node);
+
+                        if(area.ptInBox(evt.offsetX,evt.offsetY)) {
+
+                            //console.log(node);
+
+                            if(current_sheet_element != null) {
+                                current_sheet_element.removeClass("editing");
+                                current_sheet_element.addClass("edited");
+                            }
+
+                            current_sheet_element = node;
+                            current_sheet_element.removeClass("edited");
+                            current_sheet_element.addClass("editing");
+
+                            sheeter.show();
+                            sheeter.setPosition(area.topLeft.X,area.topLeft.Y);
+                            sheeter.setCurrentNode(node);
+
+                            layer_editor.draw();
+                            break;
+                        }
+                    }
+
+                });
+                /////
+
+
+                function Node2Sheet(node) {
+
+                    var width =  parseInt( node.css('width').slice(0,-2));
+                    var height = parseInt (node.css('height').slice(0,-2));
+
+                    //console.log(node.css('-webkit-transform'));
+
+                    var sx,sy
+                    var strmat = node.css('-webkit-transform');
+
+                    if(strmat == 'none') {
+                        sx = 0;
+                        sy = 0;
+
+                    }
+                    else {
+
+                        strmat = strmat.slice(0,-1);
+                        strmat = strmat.slice(7,strmat.length);
+
+                        var temp = strmat.split(',');
+
+                        sx = parseInt( temp[4]);
+                        sy = parseInt( temp[5] );
+                    }
+
+                    var bp_x,bp_y;
+                    strmat = node.css('background-position');
+
+                    if(strmat == 'none') {
+                        bp_x = 0;
+                        bp_y = 0;
+                    }
+                    else {
+                        var temp = strmat.split('px');
+                        bp_x = parseInt(temp[0]);
+                        bp_y = parseInt(temp[1]);
+                    }
+
+                    return {
+                        x:sx,
+                        y:sy,
+                        width:width,
+                        height:height,
+                        centerOffset: {x:0,y:0},
+                        bp_x : bp_x,
+                        bp_y : bp_y,
+                        texture: node.data('texture')
+
+                    }
+
+                }
+
+                //dom 내용을 메모리에 저장
+                function storeFrame(index,sheet_root) {
+
+                    var frame = {};
+                    frame.sheets = [];
+
+                    var sheet_nodes = $(sheet_root).find('.sheet');
+
+                    $.each(sheet_nodes,function(index,node) {
+                        var sheet = Node2Sheet($(node));
+                        frame.sheets.push(sheet);
+                    });
+
+                    frame.delay = $('#inp-framedelay').val();
+
+                    App.SpriteData.frames[index] = frame;
+
+                }
+
+                //메모리 내용을 dom으로 복귀
+                function restoreFrame(index,sheet_root) {
+
+                    var frame = App.SpriteData.frames[index];
+
+                    console.log(App.SpriteData.frames);
+
+                    $.each(frame.sheets,function(i,d) {
+
+                        $('<div></div>')
+                                .addClass("sheet")
+                                .addClass("edited")
+                                .css('width', d.width)
+                                .css('height', d.height)
+                                .css('-webkit-transform','translate('+ d.x + 'px,' + d.y+'px)')
+                                .css('background-image','url(' + App.imgObj.src + ')')
+                                .css('background-position',d.bp_x +'px ' + d.bp_y + 'px')
+                                .data('texture', d.texture)
+                                .appendTo(sheet_root);
+                    });//each end
+
+
+                    $('#inp-framedelay').val( frame.delay ? frame.delay : 300 );
+
+                }
+                ///////
+                //새로운 프레임 만들기
+
+                function addFrame() {
+
+//                    function() {
+
+                        //시터 숨기기
+                        sheeter.hide();
+                        layer_editor.draw();
+
+
+                        storeFrame($('#slider-frame-select').val(),$('#sheet-root'));
+                        $('#sheet-root').empty();
+
+                        //새로운 빈프레임 추가
+                        App.SpriteData.frames.push({
+                            sheets : []
+                        });
+
+                        current_sheet_element = null;
+                        current_frame_index = App.SpriteData.frames.length-1;
+
+                        $('#slider-frame-select').attr("max",current_frame_index);
+                        $('#slider-frame-select').val(current_frame_index);
+                        $('#control-sprite-frame .frameindex').text(current_frame_index);
+//                    }
+
+                }
+
+                $('#btn-add-frame').on('click',function() {
+                    addFrame();
+                });
+                ///////
+
+                //현재 프레임 삭제
+                $('#btn-del-frame').on('click',function() {
+
+                    if(App.SpriteData.frames.length > 1 ) {
+
+                        //$('#sheet-root').empty();
+
+                        App.SpriteData.frames.splice(current_frame_index,1);
+                        current_sheet_element = null;
+                        if(current_frame_index > App.SpriteData.frames.length-1 ) {
+                            current_frame_index = 0;
+                        }
+                        $('#sheet-root').empty();
+                        restoreFrame(current_frame_index,$('#sheet-root'));
+
+                        var slider =$('#slider-frame-select')[0];
+
+                        $('#slider-frame-select').attr("max",App.SpriteData.frames.length-1);
+                        $('#slider-frame-select').val(current_frame_index);
+                        //슬라이더 상태 갱신하기
+                        $('#slider-frame-select').trigger('change');
+                    }
+                    else {
+                        //그냥 내용만 지우기
+                        $('#sheet-root').empty();
+                        current_sheet_element = null;
+                        current_frame_index = 0;
+
+                        sheeter.hide();
+                        layer_editor.draw();
+
+                        console.log('cannot delete last frame!');
+                    }
+
+                });
+                ////////
+                $('#btn-ins-frame').on('click',function() {
+
+                    storeFrame($('#slider-frame-select').val(),$('#sheet-root'));
+                    $('#sheet-root').empty();
+
+                    //새로운 빈프레임 추가
+                    App.SpriteData.frames.splice(current_frame_index, 0,{
+                        sheets : []
+                    });
+
+                    current_sheet_element = null;
+                    $('#slider-frame-select').attr("max",App.SpriteData.frames.length-1);
+
+                });
+                ///////
+
+                //프레임이 바뀌면...
+                $('#slider-frame-select').on('change',function(evt) {
+
+                    //시터 숨기기
+                    sheeter.hide();
+                    layer_editor.draw();
+
+                    storeFrame(current_frame_index,$('#sheet-root'));
+                    $('#sheet-root').empty();
+
+                    //새로운 프레임인덱스로 갱신
+                    current_frame_index = $(this).val();
+                    current_sheet_element = null;
+
+                    restoreFrame(current_frame_index,$('#sheet-root'));
+
+                    $('#control-sprite-frame .frameindex').text(current_frame_index);
+
+
+                });
+                ///////
+
+                $('#control-file .btn-save').on('click',function() {
+
+                    var filename = $('#control-file .inp-filename').val();
+
+                    storeFrame(current_frame_index,$('#sheet-root'));
+
+
+                    //데이터 후처리 작업
+                    $.each(App.SpriteData.frames,function(index,frame) {
+
+                        //console.log(data);
+
+                        $.each(frame.sheets,function(index,sheet) {
+
+                            //중심점 보정값 계산
+                            sheet.centerOffset.x =  sheet.x - (App.editor_info.width/2);
+                            sheet.centerOffset.y =  sheet.y - (App.editor_info.height/2);
+
+                            //console.log(sheet);
+
+
+
+                        });
+                    });
+
+
+
+
+                    console.log(JSON.stringify(App.SpriteData));
+
+
+                    $('#control-file .textarea-export').val(JSON.stringify(App.SpriteData));
+
+
+                    if(filename.empty != '') {
+
+                        $('#text_rgn').text('now saving..');
+
+                        //파일 저장 테스트
+                        $.ajax(
+                                {
+                                    url: 'http://1.234.2.201:9304/saveFile',
+                                    type: 'GET',
+                                    jsonp: 'callback',
+                                    jsonpCallback: 'callback',
+                                    dataType: 'jsonp',
+                                    data: {
+                                        id : 'gbox3d',
+                                        jsonData: JSON.stringify(App.SpriteData),
+                                        title : filename
+                                    },
+                                    success: function(data, textStatus, jqXHR) {
+                                        console.log(data);
+                                        $('#text_rgn').text('now save.. ok');
+                                    },
+                                    error: function(jqXHR, textStatus) {
+                                        console.log(textStatus);
+                                        $('#text_rgn').text(textStatus);
+                                    },
+                                    complete: function(jqXHR, textStatus, errorThrown) {
+                                        console.log('complete');
+                                    }
+                                }
+                        );
+
+                    }
+                });
+                //////////
+
+                $('#control-file .btn-load').on('click',function() {
+
+                    var filename = $('#control-file .inp-filename').val();
+                    if(filename != '') {
+                        //파일 상세값 불러오기
+                        $.ajax(
+                                {
+                                    url: 'http://1.234.2.201:9304/loadFileDetail',
+                                    //url: 'http://localhost:9304/loadFileDetail',
+                                    type: 'GET',
+                                    jsonp: 'callback',
+                                    jsonpCallback: 'callback',
+                                    dataType: 'jsonp',
+                                    data: {
+                                        id : 'gbox3d',
+                                        title: filename
+                                    },
+                                    success: function(data, textStatus, jqXHR) {
+
+                                        $('#control-file .textarea-export').val(data);
+
+                                        console.log(data);
+
+                                        //var data = $('#control-file .textarea-export').val();
+
+                                        App.SpriteData = JSON.parse(data);
+
+                                        //새로운 프레임인덱스로 갱신
+                                        current_frame_index = 0;
+                                        current_sheet_element = null;
+
+                                        $('#slider-frame-select').attr("max",App.SpriteData.frames.length-1);
+                                        $('#slider-frame-select').val(current_frame_index);
+                                        $('#control-sprite-frame .frameindex').text(current_frame_index);
+
+                                        $('#sheet-root').empty();
+                                        restoreFrame(current_frame_index,$('#sheet-root'));
+
+
+                                    },
+                                    error: function(jqXHR, textStatus) {
+                                        console.log(textStatus);
+                                    },
+                                    complete: function(jqXHR, textStatus, errorThrown) {
+                                        console.log('complete');
+                                    }
+                                }
+                        );
+                    }
+                });
+                ////////
+
+                ///////////////////////////
+                //파일박스에서 얻기
+                document.getElementById('inp-select-files').addEventListener('change',function(evt) {
+
+                    var files = evt.target.files; // FileList object
+
+                    for (var i = 0, f; f = files[i]; i++) {
+
+                        //console.log(f);
+
+                        var reader = new FileReader();
+
+                        // Closure to capture the file information.
+                        reader.onload = (function(theFile) {
+
+                            current_texture_url = theFile.name;
+
+                            return function(e) {
+
+                                App.imgObj = new Image();
+
+                                var imgObj = App.imgObj;
+                                var view_element = document.querySelector('#img_view');
+
+                                imgObj.onload = function() {
+
+                                    while (view_element.firstChild) {
+                                        view_element.removeChild(view_element.firstChild);
+                                    }
+
+                                    var canvas = document.createElement('canvas');
+
+                                    canvas.width = imgObj.width;
+                                    canvas.height = imgObj.height;
+
+                                    var context = canvas.getContext('2d');
+
+                                    context.drawImage(imgObj,0,0);
+
+                                    view_element.appendChild(canvas);
+
+                                    $('#sprite_window .sheet').css('background-image','url('+ imgObj.src +')');
+
+                                }
+                                imgObj.src = e.target.result;
+                            };
+                        })(f);
+
+                        // Read in the image file as a data URL.
+                        reader.readAsDataURL(f);
+                    }
+                });
+
+
+                //루프 처리
+                (function loop() {
+
+
+                    if(App.imgObj != null && current_sheet_element != null) {
+
+                        var imgObj = App.imgObj;
+
+                        var cut_rect = cutter.getRect(scrollPos);
+
+                        if(cut_rect.sx < 0) {
+                            cut_rect.sx = 0;
+                        }
+                        if(cut_rect.sy < 0) {
+                            cut_rect.sy = 0;
+                        }
+
+                        if( cut_rect.sx + cut_rect.width > imgObj.width ) {
+
+                            cut_rect.width -= (cut_rect.sx + cut_rect.width - imgObj.width );
+
+                        }
+
+                        if( cut_rect.sy + cut_rect.height > imgObj.height ) {
+
+                            cut_rect.height -= (cut_rect.sy + cut_rect.height - imgObj.height );
+
+                        }
+
+                        var sheet = $('#sprite_window .sheet');
+
+                        $('#sprite_window .sheet').css('width',cut_rect.width+'px');
+                        $('#sprite_window .sheet').css('height',cut_rect.height+'px');
+
+                        $('#sprite_window .sheet').css('background-position',
+                                '-' + cut_rect.sx + 'px -' + cut_rect.sy + 'px' );
+
+                        sheeter.setRect({
+                            start : new gbox3d.core.Vect2d(0,0),
+                            end : new gbox3d.core.Vect2d(cut_rect.width,cut_rect.height)
+                        });
+
+                        //위치 갱신해주기
+                        sheeter.setCurrentNode(sheet);
+                    }
+
+                    stage.draw();
+                    stage_editor.draw();
+
+                    requestAnimationFrame(loop);
+                })();
+
+
+
+            ////////////////
+            })();
+
+
+            stage.draw();
+        });
+
+    </script>
+
+
+</head>
+<body>
+
+<div style="width: 320px; margin: auto">
+
+    <div style="margin: 3px;" >
+
+        <p id = 'text_rgn'>{}</p>
+        <!--<input id="inp-tex-size" value="588,1751" />-->
+        <!--<input id="inp-textureurl" value="../../res/Genjuro.gif" />-->
+        <!--<button id='btn-load-texture' >이미지</button>-->
+        <input type="file" id="inp-select-files" name="files[]" multiple />
+
+    </div>
+
+    <div id="main_window">
+        <div id="img_view"></div>
+        <div id="kinetic_stage" ></div>
+
+    </div>
+
+
+    <div id='control-sprite-sheet' style="width: 100%; margin-top: 3px; border: 1px solid" >
+        <!--<button id="btn-add-sheet" >add sprite sheet</button>-->
+        <button id="btn-add-frame-sheet" >add sprite frame & sheet</button>
+    </div>
+
+    <div id='sprite_window' style="position: relative;margin-top: 3px;">
+
+        <svg style="position: absolute;" >
+
+            <line x1="0" y1="120" x2="320" y2="120" style="stroke:#000000;"/>
+            <line x1="160" y1="0" x2="160" y2="240" style="stroke:#000000;"/>
+
+        </svg>
+
+        <div id='sheet-root'></div>
+        <div id="kinetic_stage_editor" style="position: absolute;" ></div>
+
+    </div>
+
+    <div id='control-sprite-frame' style="width: 100%; margin-top: 3px; border: 1px solid">
+
+        <!--<button id="btn-add-frame" >add sprite frame</button>-->
+        <div>
+            <button id="btn-ins-frame" >ins sprite frame</button>
+            <button id="btn-del-frame" >del sprite frame</button>
+        </div>
+
+        <p class="frameindex" style="width: 10%;display: inline-block" >0</p>
+        <input id='slider-frame-select' style="width: 80%" type="range" value="0" min="0" max="0"></br>
+        <div>
+            delay :  <input id='inp-framedelay' style="width: 80%" value="300">
+        </div>
+    </div>
+
+    <div id='control-file' style="width: 320px; margin-top: 3px; border: 1px solid" >
+
+        <input class='inp-filename' value="noname.json" />
+        <button class="btn-save" >save</button>
+        <button class="btn-load" >load</button>
+
+        <textarea class='textarea-export' style="margin: auto; display: block; height: 100px;width: 80%" ></textarea>
+
+    </div>
+
+
+</div>
+
+
+
+
+
+
+</body>
+</html>

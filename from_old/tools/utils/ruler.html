@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title> simple sample </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+    <script src="../../libs/extra/d3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore-min.js"></script>
+    <script src="../../libs/backbone/backbone-min.js"></script>
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+    <script src="../../libs/pig2d/js/system.js"></script>
+
+
+</head>
+
+<body style="margin: 0px;">
+
+<div id="main-window" >
+    <p id ='text-framerate-info' style="position: absolute" >frame rate</p>
+    <p class="window-info" style="position: absolute;margin-top: 50px" ></p>
+    <svg class="grid" style="position: absolute">
+        <g class="detail" ></g>
+
+        <g class="axies"></g>
+    </svg>
+</div>
+
+<script>
+
+
+    function main() {
+
+        //var textures = evt.textures;
+
+        //씬메니져 생성하기
+        var Smgr = new Pig2d.SceneManager({
+            container : document.querySelector('#main-window')
+        });
+
+        var camera_node = Pig2d.util.createDummy();
+        camera_node.get('model').setPosition(window.innerWidth/2,window.innerHeight/2);
+        Smgr.add(camera_node);
+
+        window.addEventListener( 'resize', function(evt) {
+            //console.log(window.innerWidth);
+
+            camera_node.get('model').setPosition(window.innerWidth/2,window.innerHeight/2);
+            drawGridSprite(64,'red',camera_node);
+
+        }, false );
+
+        drawGridSprite(64,'red',camera_node);
+
+        function drawGridSprite(size,grid_color,parent_node) {
+
+            var svg = d3.select('#main-window .grid');
+
+            var grid_svg = d3.select('#main-window .grid .detail');
+            grid_svg.select('.grid-root').remove();
+
+            var g = grid_svg.append('g')
+                    .attr('class','grid-root');
+
+            var width = window.innerWidth;
+            var height = window.innerHeight;
+
+            svg.style('width',width)
+                    .style('height',height)
+                    .style('-webkit-transform','translate('+ ((-width/2) )  +'px,'+ (-height/2  ) +'px)');
+
+            for(var i=0; i < (width/size) ; i++)
+            {
+                g.append('line')
+                        .attr('x1',size*i)
+                        .attr('x2',size*i)
+                        .attr('y1',0)
+                        .attr('y2',height)
+                        .style('stroke',grid_color);
+            }
+
+            for(var i=0; i < (height/size) ; i++) {
+                g.append('line')
+                        .attr('x1',0)
+                        .attr('x2',width)
+                        .attr('y1',size*i)
+                        .attr('y2',size*i)
+                        .style('stroke',grid_color);
+
+            }
+
+            //축 그리기
+            var g_axies = d3.select('#main-window .grid .axies');
+
+            g_axies.select('.root').remove();
+            var g_axies_root = g_axies.append('g')
+                    .attr('class','root');
+
+            g_axies_root.append('line')
+                    .attr('x1',width/2)
+                    .attr('x2',width/2)
+                    .attr('y1',0)
+                    .attr('y2',height)
+                    .style('stroke','black');
+
+            g_axies_root.append('line')
+                    .attr('x1',0)
+                    .attr('x2',width)
+                    .attr('y1',height/2)
+                    .attr('y2',height/2)
+                    .style('stroke','black');
+
+            //카메라 노드 밑으로 붙이기
+            parent_node.get('model').get('element').appendChild(document.querySelector('#main-window .grid'));
+
+
+        }
+
+
+
+        //게임루프시작
+        Pig2d.system.startGameLoop({
+
+            framerate_info_element : document.querySelector("#text-framerate-info"),
+            gameLoopCallBack : function(deltaTime) {
+
+                document.querySelector('#main-window .window-info').innerText = window.innerWidth + '/' + window.innerHeight;
+
+
+                //씬메니져 업데이트
+                //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+                Smgr.updateAll(deltaTime);
+
+            },
+            loopCount_limit : 30
+        });
+
+    }
+
+    main();
+
+</script>
+
+
+
+</body>
+</html>

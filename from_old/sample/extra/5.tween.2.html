@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title> tweenJS ani Sample </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/jquery.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <script src="../../libs/backbone/backbone.js"></script>
+
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <script src="../../libs/gl-matrix.js"></script>
+
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+    <script src="../../libs/pig2d/js/util.js"></script>
+
+    <script src='../../libs/extra/Tween.js'></script>
+
+
+</head>
+
+<body>
+
+<div style="width: 320px; margin: auto;">
+
+    <p id='text-framerate-info'>frame rate</p>
+
+    <div id='sprite_window' style="position: relative;height :260px;margin-top: 3px;">
+
+        <svg style="position: absolute;height :240px;border: 1px solid;" >
+
+            <line x1="0" y1="120" x2="320" y2="120" style="stroke:#000000;"/>
+            <line x1="160" y1="0" x2="160" y2="240" style="stroke:#000000;"/>
+
+        </svg>
+
+    </div>
+    <button id='btn-test'> go </button>
+    <button id='btn-test2'> go2 </button>
+    <button id='btn-test3'> pingpong </button>
+</div>
+
+
+
+<script>
+
+    //씬메니져 생성하기
+    var Smgr = new Pig2d.SceneManager({
+        container : document.querySelector('#sprite_window'),
+        window_size : { //클리핑 범위 지정
+            width : 320,
+            height: 240
+        }
+    });
+
+    var node = Smgr.addImageNode({
+        src : '../../res/atat/atat-body.png',
+        onload : function(node) {
+            console.log(node.get('model').get('imgObj').src + ' loaded ');
+        }
+    });
+
+    var position = {x: 50, y: 50, rotation: 0,scale : 1};
+    node.get('model').setPosition(position.x,position.y);
+
+    document.querySelector('#btn-test').addEventListener('click',function() {
+
+        var tween = new TWEEN.Tween(position)
+                .to({x: 160, y: 120, rotation: 180,scale : 0.3}, 2000)
+                .delay(0)
+                .easing(TWEEN.Easing.Linear.None)
+                .onUpdate(function() {
+                    node.get('model').setPosition(position.x,position.y);
+                    node.get('model').setRotation(position.rotation);
+                    node.get('model').setScale(position.scale,position.scale);
+                });
+        tween.start();
+
+    });
+
+    document.querySelector('#btn-test2').addEventListener('click',function() {
+
+        var tween = new TWEEN.Tween(position)
+                .to({x: 0, y: 0, rotation: 0,scale : 1.0}, 2000)
+                .delay(0)
+                .easing(TWEEN.Easing.Linear.None)
+                .onUpdate(function() {
+                    node.get('model').setPosition(position.x,position.y);
+                    node.get('model').setRotation(position.rotation);
+                    node.get('model').setScale(position.scale,position.scale);
+                });
+        tween.start();
+
+    });
+
+
+    //chaining
+    document.querySelector('#btn-test3').addEventListener('click',function() {
+
+                var tween = new TWEEN.Tween(position)
+                        .to({x: 160, y: 120, rotation: 180,scale : 0.3}, 2000)
+                        .delay(0)
+                        .easing(TWEEN.Easing.Linear.None)
+                        .onUpdate(function() {
+                            node.get('model').setPosition(position.x,position.y);
+                            node.get('model').setRotation(position.rotation);
+                            node.get('model').setScale(position.scale,position.scale);
+                        });
+                //tween.start();
+
+                var tween2 = new TWEEN.Tween(position)
+                        .to({x: 0, y: 0, rotation: 0,scale : 1.0}, 2000)
+                        .delay(0)
+                        .easing(TWEEN.Easing.Linear.None)
+                        .onUpdate(function() {
+                            node.get('model').setPosition(position.x,position.y);
+                            node.get('model').setRotation(position.rotation);
+                            node.get('model').setScale(position.scale,position.scale);
+                        });
+                //tween2.start();
+
+                tween.chain(tween2);
+
+                tween.start();
+
+
+            }
+    );
+
+    //타이머 설정 및 퍼포먼트 테스트용 정보
+    var mytimer = new gbox3d.core.Timer();
+    var framerate_info = document.querySelector("#text-framerate-info");
+    var frame_total = 0;
+    var loop_count = 0;
+
+    //게임 루프
+    requestAnimationFrame(
+            function loop() {
+
+                var deltaTime = mytimer.getDeltaTime();
+                frame_total += Math.round(1.0 / deltaTime);
+
+                loop_count++;
+
+                framerate_info.innerText = Math.round(frame_total / loop_count);
+
+                //씬메니져 업데이트
+                //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+                Smgr.updateAll();
+                TWEEN.update();
+
+                requestAnimationFrame(loop);
+
+            }
+
+    );
+
+</script>
+
+
+
+</body>
+</html>

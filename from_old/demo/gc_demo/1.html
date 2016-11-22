@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title>  </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+    <script src="../../libs/extra/d3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <script src="../../libs/backbone/backbone.js"></script>
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+    <script src="../../libs/pig2d/js/serialize.js"></script>
+
+    <script src="../../libs/pig2d/js/controller.js"></script>
+    <script src="../../libs/pig2d/js/scroller.js"></script>
+    <script src="../../libs/pig2d/js/particle.js"></script>
+    <script src="../../libs/pig2d/js/system.js"></script>
+    <script src="../../libs/pig2d/js/serialize.js"></script>
+
+
+    <script src="battle_logic.js"></script>
+
+
+
+</head>
+
+<body style="margin: 0px;" >
+
+<div style="overflow: auto;">
+
+    <div id="page-start" style="
+    height: 240px;
+    border: 1px solid;
+    display: -webkit-box;
+				-webkit-box-orient: horizontal;
+				-webkit-box-pack: center; /* 수평 정렬기준  */
+				-webkit-box-align: center;
+" >
+
+        <p id="text-loading-progress" >loading...</p>
+
+    </div>
+
+    <div id="main-window" style="width: 320px;height: 240px;display: none">
+        <p id ='text-framerate-info' style="position: absolute;z-index: 5;" ></p>
+        <p id ='text-system-info' style="position: absolute;-webkit-transform:translate(0px,20px); z-index: 5;" ></p>
+
+    </div>
+
+    <div id="tool-window" style="width: 320px;height: 240px;" >
+
+        <textarea class="script-editor" style="width: 320px;height: 200px;" ></textarea>
+        <button class="btn-run" style="width: 100%;height: 24px;display: block" > run </button>
+
+
+    </div>
+
+</div>
+
+<script src="test_battle.js"></script>
+
+<script>
+
+
+    var page_start = document.getElementById('page-start');
+    var text_load_progress = document.getElementById('text-loading-progress');
+    var page_game_play = document.getElementById('main-window');
+
+    var theApp = {};
+    theApp.Smgr = new Pig2d.SceneManager({
+        container :  document.querySelector('#main-window'),
+        window_size : { //클리핑 범위 지정
+            width : 320,
+            height: 240
+        },
+        bkg_color: '#aaaaaa'
+    });
+
+    theApp.getPrefeb = function(name) {
+
+        return {
+            texture : theApp.asset_data.resData.textures[theApp.asset_data.img_files[theApp.asset_data.objects[name].texture]],
+            animation :  theApp.asset_data.resData.animations[theApp.asset_data.animation_files[theApp.asset_data.objects[name].animation]]
+        }
+
+
+    }
+
+    function OnLoadProgress(evt) {
+
+        text_load_progress.style.backgroundColor = 'red';
+        text_load_progress.style.width = evt.percent + 'px';
+        text_load_progress.style.height = '32px';
+
+    };
+
+    function OnLoadComplete(asset_data) {
+
+        console.log('에셋 데이터 로딩 완료');
+        theApp.asset_data = asset_data;
+
+        $.ajax({
+            type : "GET",
+            url : "bs1.json",
+            dataType : "json",
+            success : function(data) {
+
+                //로딩화면 가리고 게임화면 보여주기
+                page_start.style.display = 'none';
+                page_game_play.style.display = 'block';
+
+                console.log('씬데이터 로딩 완료');
+                console.log(data);
+
+                //카메라 노드 만들기
+                theApp.CameraNode = Pig2d.util.createDummy();
+                theApp.CameraNode.get('model').setPosition(160,120);
+                theApp.CameraNode.get('model').setScale(0.5,0.5);
+                theApp.Smgr.add(theApp.CameraNode);
+
+                //씬 구성
+                theApp.Smgr.deserialize({
+                    parent: theApp.CameraNode,
+                    data : data,
+                    asset_data : theApp.asset_data
+                });
+
+
+                theApp.Smgr.updateAll(0);
+
+                //배틀 시스템 셋업
+                BattleLogic.setup({
+                    root : theApp.CameraNode.findByName('bt_root')
+                });
+
+            },
+            error : function(evt,status,xhr) {
+
+                console.log(status);
+
+            }
+        });
+
+    };
+
+    ///////////
+
+
+    document.querySelector('#tool-window .btn-run').addEventListener('click',function() {
+
+        BattleLogic.processBattle({
+            battle_data: test_battle_data
+        });
+
+    });
+
+    //////////
+
+
+    //디폴트 어셋파일
+    Pig2d.system.InitAssetSystem({
+        filename: '../../res/grandchase/asset_index.json',
+        OnLoadProgress : OnLoadProgress,
+        OnLoadComplete : OnLoadComplete
+    });
+
+    //게임루프시작
+    Pig2d.system.startGameLoop({
+
+        framerate_info_element : document.getElementById('text-framerate-info'),
+        gameLoopCallBack : function(deltaTime) {
+            //씬메니져 업데이트
+            //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+            theApp.Smgr.updateAll(deltaTime);
+        },
+        loopCount_limit : 30
+    });
+
+</script>
+
+
+
+</body>
+</html>

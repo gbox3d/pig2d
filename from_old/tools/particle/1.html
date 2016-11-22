@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title> particle sample 1</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <script src="../../libs/backbone/backbone.js"></script>
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+
+    <script src="../../libs/pig2d/js/controller.js"></script>
+    <script src="../../libs/pig2d/js/scroller.js"></script>
+    <script src="../../libs/pig2d/js/particle.js"></script>
+
+    <script src="../../libs/pig2d/js/system.js"></script>
+
+
+</head>
+
+<body>
+
+<div class="pig2d-fullscreen" >
+    <p id ='text-framerate-info' style="position: absolute;z-index: 5;" >frame rate</p>
+</div>
+
+<script>
+
+
+
+    function OnLoadComplete(evt) {
+
+        //씬메니져 생성하기
+        var Smgr = null;
+
+        var textures = evt.textures;
+        var animations = evt.animations;
+
+        Smgr = new Pig2d.SceneManager({
+            container :  document.querySelector('.pig2d-fullscreen')
+        });
+
+
+        document.body.addEventListener('mousedown',function(evt) {
+
+            console.log("boom");
+
+            new Pig2d.Particle.OneShot({
+                X : evt.x,
+                Y : evt.y,
+                sprite_data : {
+                    texture: textures['e0.png'],
+                    animation : animations['e0.json']
+
+                },
+                parent : Smgr.get('rootNode')
+            });
+
+        });
+
+
+        document.body.addEventListener('touchstart',function(evt) {
+
+            event.preventDefault();
+
+            var touch = event.touches[ 0 ];
+
+            var touchX = touch.screenX;
+            var touchY = touch.screenY;
+
+            console.log("boom");
+
+            new Pig2d.Particle.OneShot({
+                X : touchX,
+                Y : touchY,
+                sprite_data : {
+                    texture: textures['e0.png'],
+                    animation : animations['e0.json']
+
+                },
+                parent : Smgr.get('rootNode')
+            });
+
+        });
+
+
+        ///////////////////////////////////////////////////////////////
+        //게임루프시작
+        Pig2d.system.startGameLoop({
+
+            framerate_info_element : document.getElementById('text-framerate-info'),
+            gameLoopCallBack : function(deltaTime) {
+                //씬메니져 업데이트
+                //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+                Smgr.updateAll(deltaTime);
+            },
+            loopCount_limit : 30
+        });
+
+    }
+
+
+    Pig2d.util.SetupAsset({
+        asset_path : "../../res/effect_test/e/",
+        img_files : [
+            "e0.png",
+            "e1.png",
+            "e2.png",
+            "e3.png",
+            "e5.png"
+        ],
+        animation_files : [
+            "e0.json",
+            "e1.json",
+            "e2.json",
+            "e3.json",
+            "e5.json"
+        ],
+        OnLoadComplete : OnLoadComplete
+
+    });
+
+
+
+</script>
+
+
+
+</body>
+</html>

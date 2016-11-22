@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title>  </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+    <script src="../../libs/extra/d3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <script src="../../libs/backbone/backbone.js"></script>
+
+    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+
+    <script src="../../libs/pig2d/js/controller.js"></script>
+    <script src="../../libs/pig2d/js/scroller.js"></script>
+    <script src="../../libs/pig2d/js/particle.js"></script>
+    <script src="../../libs/pig2d/js/system.js"></script>
+
+
+</head>
+
+<body style="margin: 0px;" >
+
+<div style="overflow: auto;">
+
+    <div id="page-start" style="
+    height: 240px;
+    border: 1px solid;
+    display: -webkit-box;
+				-webkit-box-orient: horizontal;
+				-webkit-box-pack: center; /* 수평 정렬기준  */
+				-webkit-box-align: center;
+" >
+
+        <p id="text-loading-progress" >loading...</p>
+
+    </div>
+
+    <div id="main-window" style="width: 320px;height: 240px;display: none">
+        <p id ='text-framerate-info' style="position: absolute;z-index: 5;" ></p>
+        <p id ='text-system-info' style="position: absolute;-webkit-transform:translate(0px,20px); z-index: 5;" ></p>
+    </div>
+
+    <button id="btn-test1" >test1</button>
+    <button id="btn-test2" >sleep all</button>
+    <button id="btn-test3" >partial wakeup</button>
+    <p id='text-log'></p>
+
+</div>
+
+<script>
+
+    var page_start = document.getElementById('page-start');
+    var text_load_progress = document.getElementById('text-loading-progress');
+    var page_game_play = document.getElementById('main-window');
+
+    var theApp = {};
+    theApp.Smgr = new Pig2d.SceneManager({
+        container :  document.querySelector('#main-window'),
+        window_size : { //클리핑 범위 지정
+            width : 320,
+            height: 240
+        },
+        bkg_color: '#aaaaaa'
+    });
+
+    theApp.profile = {
+        ani_canvas_total : 0,
+        active_texture_total : 0
+    };
+
+    var framerate_info_element = document.querySelector('#text-framerate-info');
+    var text_log_element = document.querySelector('#text-log');
+
+
+
+    var objtest_index = [
+        'unit_0','unit_1','unit_2','unit_3','unit_4','unit_7','unit_8','unit_9','unit_11','unit_13','unit_14',
+        'unit_15','unit_16','unit_17','unit_18','unit_19','unit_20','unit_21','unit_23','unit_24','unit_25','unit_26'
+    ];
+    var objtest_count = 0;
+
+
+
+    function OnLoadProgress(evt) {
+
+        text_load_progress.style.backgroundColor = 'red';
+        text_load_progress.style.width = evt.percent + 'px';
+        text_load_progress.style.height = '32px';
+
+    };
+
+    function OnLoadComplete(data) {
+
+        page_start.style.display = 'none';
+        page_game_play.style.display = 'block';
+
+        theApp.asset_Data = data;
+
+        theApp.UnitObjects = [];
+
+        function addObject(unit,x,y,flip,scaler) {
+            var asset_info = theApp.asset_Data.getAssetDataInfo(unit);
+
+            var dummy = Pig2d.util.createDummy();
+
+            var node_sprite = Pig2d.util.createSprite(
+                    {
+                        texture :asset_info.texture,
+                        animation : asset_info.animation,
+                        canvas_size : asset_info.animation.canvas_size
+                    }
+            );
+
+            node_sprite.get('model').setScaler(scaler || 0.5);
+            node_sprite.get('model').set('flipY',flip || false);
+
+            node_sprite.get('model').setupAnimation({
+                AnimationStatus : 'stop'
+            });
+
+            dummy.add(node_sprite);
+            dummy.get('model').setPosition(x,y);
+            dummy.node_sprite = node_sprite;
+
+
+            theApp.UnitObjects.push(dummy);
+            theApp.Smgr.add(dummy);
+
+            dummy.update(true,0);
+
+
+        }
+
+        addObject('unit_0',50,50,false);
+        addObject('unit_1',100,80,false);
+        addObject('unit_2',50,110,false);
+        addObject('unit_3',100,140,false);
+        addObject('unit_4',50,170,false);
+
+        addObject('unit_7',250,50,true);
+        addObject('unit_8',200,80,true);
+        addObject('unit_9',250,110,true);
+        addObject('unit_11',200,140,true);
+        addObject('unit_13',250,170,true);
+
+        function wakeupAllObjects(delay) {
+            var count = 0;
+
+            function chainreaction() {
+
+                setTimeout(function() {
+
+                    theApp.UnitObjects[count++].node_sprite.get('model').set('AnimationStatus','play');
+                    if(count < 10) {
+                        chainreaction();
+                    }
+
+                },delay);
+            }
+
+            chainreaction();
+        }
+
+        function sleepAllObject() {
+            for(var i=0;i<10;i++) {
+                theApp.UnitObjects[i].node_sprite.get('model').stopAnimation();
+            }
+        }
+
+
+
+        wakeupAllObjects(100);
+
+
+        //드레스 체인지
+        document.querySelector('#btn-test1').addEventListener('click',function() {
+
+            sleepAllObject();
+
+            for(var i=0;i<10;i++) {
+                theApp.UnitObjects[i].node_sprite.get('model').changeDress(theApp.asset_Data.getAssetDataInfo(objtest_index[gbox3d.core.randomIntFromTo(0,20)]));
+            }
+
+            wakeupAllObjects(100);
+
+        });
+
+        document.querySelector('#btn-test2').addEventListener('click',function() {
+            sleepAllObject();
+            wakeupAllObjects(100);
+
+        });
+
+        //부분 기상
+        document.querySelector('#btn-test3').addEventListener('click',function() {
+            sleepAllObject();
+
+            theApp.UnitObjects[gbox3d.core.randomIntFromTo(0,9)].node_sprite.get('model').set('AnimationStatus','play');
+            theApp.UnitObjects[gbox3d.core.randomIntFromTo(0,9)].node_sprite.get('model').set('AnimationStatus','play');
+            theApp.UnitObjects[gbox3d.core.randomIntFromTo(0,9)].node_sprite.get('model').set('AnimationStatus','play');
+            theApp.UnitObjects[gbox3d.core.randomIntFromTo(0,9)].node_sprite.get('model').set('AnimationStatus','play');
+            theApp.UnitObjects[gbox3d.core.randomIntFromTo(0,9)].node_sprite.get('model').set('AnimationStatus','play');
+
+        });
+
+    };
+
+    Pig2d.system.InitAssetSystem({
+        filename : 'test.json',
+        OnLoadProgress : OnLoadProgress,
+        OnLoadComplete : OnLoadComplete
+    });
+
+
+    //게임루프시작
+    Pig2d.system.startGameLoop({
+
+        framerate_info_element : framerate_info_element,
+        gameLoopCallBack : function(deltaTime) {
+
+            //씬메니져 업데이트
+            //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+            theApp.Smgr.updateAll(deltaTime);
+
+        },
+        loopCount_limit : 30
+    });
+</script>
+
+
+
+</body>
+</html>

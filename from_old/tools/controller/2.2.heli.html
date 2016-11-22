@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+
+    <title> heli control sample </title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1,maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
+
+    <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
+    <script src="../../libs/jquery-2.0.3.min.js"></script>
+
+    <!--백본은 제이쿼리 다음에 포함시키는것이 건강에 이롭다 -->
+    <script src="../../libs/backbone/underscore.js"></script>
+    <script src="../../libs/backbone/backbone.js"></script>
+
+    <script src="../../libs/pig2d/js/core.js"></script>
+    <script src="../../libs/pig2d/js/node2d.js"></script>
+    <script src="../../libs/pig2d/js/controller.js"></script>
+
+
+</head>
+
+<body>
+
+<div class="pig2d-fullscreen" >
+    <p id ='text-framerate-info' style="position: absolute" >frame rate</p>
+</div>
+
+<script>
+
+
+    function main(evt) {
+
+        var textures = evt.textures;
+
+        //씬메니져 생성하기
+        var Smgr = new Pig2d.SceneManager({
+            container : document.querySelector('.pig2d-fullscreen')
+        });
+
+        var heli_root = Pig2d.util.createDummy();
+        heli_root.get('model').setPosition(300,200);
+
+        //스프라이트 노드 만들기
+        var node = Pig2d.util.createSlicedImage({
+            imgObj : textures['stateczek.png'],
+            basex : -textures['stateczek.png'].width/2,
+            basey : -textures['stateczek.png'].height/2
+        });
+
+        node.get('model').setRotation(90);
+
+        heli_root.add(node);
+
+        //씬메니져 등록하기
+        Smgr.add(heli_root);
+
+        //컨트롤러 설정
+        var my_controller = new Pig2d.util.controller.Joystick({
+            listener_element:document.querySelector('body'),
+            radius_control : 100
+        });
+
+        //타이머 설정 및 퍼포먼트 테스트용 정보
+        var mytimer = new gbox3d.core.Timer();
+        var framerate_info = document.querySelector("#text-framerate-info");
+        var frame_total = 0;
+        var loop_count = 0;
+
+        //게임 루프
+        requestAnimationFrame(
+                function loop() {
+
+                    var deltaTime = mytimer.getDeltaTime();
+                    frame_total += Math.round(1.0 / deltaTime);
+
+                    loop_count++;
+
+                    framerate_info.innerText = Math.round(frame_total / loop_count);
+
+                    //오브잭트 움직이기
+                    var speed = my_controller.Distance * 100.0 * deltaTime;
+
+                    if(speed > 0) {
+                        var angle = my_controller.vDirection.getAngle();
+                        heli_root.get('model').setRotation(angle);
+                        var vDir = new gbox3d.core.Vect2d(1,0);
+
+                        heli_root.get('model').translate(speed,vDir);
+                    }
+
+
+                    //씬메니져 업데이트
+                    //여기서 모든 노드들의 최신상태가 화면에 반영이 된다.
+                    Smgr.updateAll(deltaTime);
+
+                    requestAnimationFrame(loop);
+
+                }
+        );
+
+    }
+
+    var img_files = [
+        'stateczek.png',
+        'Gepard.png',
+        'container.png'
+    ];
+
+
+    Pig2d.util.SetupAsset({
+        asset_path : "../../res/Ships/",
+        img_files : img_files,
+        OnLoadComplete : main
+
+    });
+
+
+</script>
+
+
+
+</body>
+</html>
