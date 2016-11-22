@@ -1,0 +1,15 @@
+{
+    "name":"running_man",
+    "frames":[
+        {"sheets":[{"width":64,"height":64,"centerOffset":{"x":-32,"y":-64},"bp_x":0,"bp_y":0}],"delay":"50"},
+        {"sheets":[{"width":64,"height":64,"centerOffset":{"x":-32,"y":-64},"bp_x":-64,"bp_y":0}],"delay":"50"},
+        {"sheets":[{"width":64,"height":64,"centerOffset":{"x":-32,"y":-64},"bp_x":-128,"bp_y":0}],"delay":"50"},
+        {"sheets":[{"width":64,"height":64,"centerOffset":{"x":-32,"y":-64},"bp_x":-192,"bp_y":0}],"delay":"50"},
+        {"sheets":[{"width":64,"height":64,"centerOffset":{"x":-32,"y":-64},"bp_x":-256,"bp_y":0}],"delay":"50"},
+        {"sheets":[{"width":64,"height":64,"centerOffset":{"x":-32,"y":-64},"bp_x":-320,"bp_y":0}],"delay":"50"},
+        {"sheets":[{"width":64,"height":64,"centerOffset":{"x":-32,"y":-64},"bp_x":-384,"bp_y":0}],"delay":"50"},
+        {"sheets":[{"width":64,"height":64,"centerOffset":{"x":-32,"y":-64},"bp_x":-448,"bp_y":0}],"delay":"50"},
+        {"sheets":[{"width":64,"height":64,"centerOffset":{"x":-32,"y":-64},"bp_x":-512,"bp_y":0}],"delay":"50"},
+        {"sheets":[{"width":64,"height":64,"centerOffset":{"x":-32,"y":-64},"bp_x":-576,"bp_y":0}],"delay":"50"}
+    ]
+}

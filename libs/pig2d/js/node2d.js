@@ -13,7 +13,7 @@
 
 
 var Pig2d = {
-    version : "1.0.0"
+    version : "1.0.1"
 };
 
 /////////////////////
@@ -879,6 +879,8 @@ Pig2d.SceneManager = Backbone.Model.extend({
 
     initialize: function(param) {
 
+        //console.log(param);
+
         var rootNode = new Pig2d.node(
             {
                 model : new Pig2d.model({
@@ -895,9 +897,13 @@ Pig2d.SceneManager = Backbone.Model.extend({
 
         if(param.window_size != undefined) {
             rootElement.style.overflow = 'hidden';
-            rootElement.style.width = param.window_size.width + 'px' ;
-            rootElement.style.height = param.window_size.height + 'px' ;
+            this.attributes.container.style.width = rootElement.style.width = param.window_size.width + 'px' ;
+            this.attributes.container.style.height = rootElement.style.height = param.window_size.height + 'px' ;
+
+            //this.attributes.container.style.width = param.window_size.width;
+            //this.attributes.container.style.height = param.window_size.height;
         }
+
 
         if(param.bkg_color != undefined) {
 

@@ -9,45 +9,31 @@
 
     <link rel="stylesheet" href="../../libs/pig2d/css/core.css" />
 
-
     <!--제이쿼리가 종속성 관계에서 가장 높은 위치이다 그래서 맨먼저 쓴다-->
     <script src="../../libs/jquery-2.0.3.min.js"></script>
 
-    <!--백본은 제이쿼리 다음에 포함시킨다. -->
     <script src="../../libs/backbone/underscore-min.js"></script>
     <script src="../../libs/backbone/backbone-min.js"></script>
 
-    <!--pig2d 엔진은 제이쿼리와 백본에 종속적이므로 맨 나중에 쓴다-->
 
     <script src="../../libs/pig2d/js/core.js"></script>
     <script src="../../libs/pig2d/js/node2d.js"></script>
-    <script src="../../libs/pig2d/js/system.js"></script>
     <script src="../../libs/pig2d/js/util.js"></script>
 
-
-    <!--샘플핼퍼 -->
-    <script src="sample-helper.js" ></script>
-    <link rel="stylesheet" href="sample-helper.css" />
-
-
+    <script src="../../libs/pig2d/js/system.js"></script>
 
 </head>
 
 <body>
 
-<div style="width: 320px; margin: auto;">
+<div id='main-screen'></div>
 
-    <p id='text-framerate-info'>frame rate</p>
-
-    <div id='pig2d-320240-screen'></div>
-
-    <div id="ui-pannel" style="height: 120px;background-color: #dcdcdc;">
-        <div class='fire1' style="margin-top :30px; margin-left: 30px; display: inline-block; width: 60px;height: 60px; background-color: #ff0000"></div>
-        <div class='fire2' style="margin-left: 30px;display: inline-block;width: 60px;height: 60px; background-color: #00ff00"></div>
-        <div class='fire3' style="margin-left: 30px;display: inline-block;width: 60px;height: 60px; background-color: #0000ff"></div>
-    </div>
-
+<div id="ui-pannel" style="width :320px;height: 120px;background-color: #dcdcdc;">
+    <div class='fire1' style="margin-top :30px; margin-left: 30px; display: inline-block; width: 60px;height: 60px; background-color: #ff0000"></div>
+    <div class='fire2' style="margin-left: 30px;display: inline-block;width: 60px;height: 60px; background-color: #00ff00"></div>
+    <div class='fire3' style="margin-left: 30px;display: inline-block;width: 60px;height: 60px; background-color: #0000ff"></div>
 </div>
+
 <script>
 
     var sprite_data = {
@@ -78,15 +64,13 @@
 
         //씬메니져 생성하기
         var Smgr = new Pig2d.SceneManager({
-            container : document.querySelector('#pig2d-320240-screen')
+            container : document.querySelector('#main-screen')
             ,window_size : { //클리핑 범위 지정
                 width : 320,
                 height: 240
-            }
+            },
+            bkg_color : '#bf62ff'
         });
-
-        Pig2d.SampleHelper.addScreenGrid(Smgr);
-
 
         var node = new Pig2d.node();
         var model =  new Pig2d.SpriteModel( {
@@ -95,12 +79,7 @@
                 }
         );
 
-        node.set(
-                {model :model }
-        );
-
-
-
+        node.set({model :model });
         node.get('model').setupAnimation();
         /*
         play,stop,ready

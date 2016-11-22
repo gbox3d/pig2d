@@ -17,8 +17,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/async/2.1.2/async.min.js"></script>
 
     <!--backbone-->
-    <script src="https://gbox3d.github.io/pig2d/libs/backbone/underscore-min.js"></script>
-    <script src="https://gbox3d.github.io/pig2d/libs/backbone/backbone-min.js"></script>
+    <script src="https://gbox3d.github.io/pig2d/libs/backbone/underscore.js"></script>
+    <script src="https://gbox3d.github.io/pig2d/libs/backbone/backbone.js"></script>
 
     <!--pig2d-->
     <script src="https://gbox3d.github.io/pig2d/libs/pig2d/js/core.js"></script>
@@ -75,6 +75,7 @@
         (evt,next)=> {
             let textures = evt.textures;
 
+            console.log('test')
             //씬메니져 생성하기
             let Smgr = new Pig2d.SceneManager({
                 container : document.querySelector('#main-screen')
@@ -83,6 +84,8 @@
                     height: 240
                 }
             });
+
+
 
             //스프라이트 노드 만들기
             let node = Pig2d.util.createSlicedImage({
